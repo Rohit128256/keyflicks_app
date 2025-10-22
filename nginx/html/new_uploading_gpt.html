@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Secret Video Streaming Platform</title>
+  <link href="https://vjs.zencdn.net/7.20.3/video-js.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/videojs-hls-quality-selector@1.1.4/dist/videojs-hls-quality-selector.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* core styles (kept visually same as your design) */
+    * { margin:0; padding:0; box-sizing:border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background: linear-gradient(135deg, #0f1b40, #2a0a3a, #0f1b40); min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:40px 20px; color:white; }
+    .container { max-width:1000px; width:100%; background:rgba(10,10,20,0.9); border-radius:20px; overflow:hidden; box-shadow:0 15px 30px rgba(0,0,0,0.7); backdrop-filter: blur(10px); border:1px solid rgba(100,100,200,0.2); }
+    header { text-align:center; padding:25px 20px; background:rgba(0,0,0,0.5); border-bottom:1px solid rgba(100,100,200,0.3); }
+    h1 { font-size:2.5rem; margin-bottom:10px; background: linear-gradient(to right, #4facfe, #00f2fe); -webkit-background-clip:text; -webkit-text-fill-color:transparent; text-shadow:0 2px 10px rgba(0,0,0,0.3); }
+    .subtitle { font-size:1.1rem; color:#aaccff; max-width:600px; margin:0 auto; line-height:1.6; }
+    .video-input-section { padding:25px; background: rgba(0,0,0,0.3); border-bottom:1px solid rgba(100,100,200,0.2); }
+    #video-form { display:flex; gap:15px; justify-content:center; align-items:center; flex-wrap:wrap; }
+    #video-id-input { flex-grow:1; max-width:400px; padding:12px 15px; border-radius:8px; border:1px solid rgba(100,150,255,0.3); background:rgba(0,10,30,0.8); color:white; font-size:1rem; }
+    #video-form button { padding:12px 25px; border-radius:8px; border:none; background: linear-gradient(to right, #4facfe, #00f2fe); color:white; font-size:1rem; font-weight:bold; cursor:pointer; transition: transform 0.2s ease; }
+    #video-form button:hover { transform: scale(1.05); }
+    #status-message { text-align:center; padding:15px; margin:20px 25px 0; border-radius:8px; display:none; font-size:1.1rem; }
+    .status-info { background: rgba(79,172,254,0.2); border: 1px solid rgba(79,172,254,0.4); color:#4facfe; }
+    .status-warning { background: rgba(255,165,0,0.2); border:1px solid rgba(255,165,0,0.4); color:orange; }
+    .status-error { background: rgba(255,0,0,0.2); border:1px solid rgba(255,0,0,0.4); color:#ff8a8a; }
+    .player-content-wrapper { display:none; }
+    .player-container { padding:20px; background:#000; position:relative; }
+    .video-wrapper { position:relative; overflow:hidden; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,0.8); }
+    .video-js { width:100%; height:0; padding-top:56.25%; border-radius:10px; }
+    .info-section { display:flex; justify-content:space-between; padding:20px; background: rgba(20,30,60,0.7); margin:20px; border-radius:10px; border:1px solid rgba(100,150,255,0.2); }
+    .info-card { flex:1; padding:15px; background: rgba(0,10,30,0.6); border-radius:10px; margin:0 10px; text-align:center; }
+    .info-card h3 { color:#4facfe; margin-bottom:10px; font-size:1.2rem; }
+    .info-card p { color:#cce5ff; font-size:1rem; }
+    .tech-badges { display:flex; justify-content:center; flex-wrap:wrap; gap:10px; margin-top:15px; }
+    .badge { background: rgba(79,172,254,0.2); color:#4facfe; padding:5px 10px; border-radius:20px; font-size:0.85rem; border:1px solid rgba(79,172,254,0.3); }
+    .features { display:grid; grid-template-columns: repeat(auto-fit, minmax(250px,1fr)); gap:20px; padding:0 20px 30px; }
+    .feature-card { background: rgba(20,30,60,0.6); padding:20px; border-radius:10px; text-align:center; border:1px solid rgba(100,150,255,0.2); transition: transform .3s ease, background .3s ease; }
+    .feature-card:hover { transform: translateY(-5px); background: rgba(30,50,100,0.8); box-shadow:0 5px 15px rgba(0,0,0,0.3); }
+    .feature-card i { font-size:2.5rem; color:#4facfe; margin-bottom:15px; text-shadow:0 0 10px rgba(79,172,254,0.5); }
+    .feature-card h3 { margin-bottom:10px; color:#4facfe; }
+    .feature-card p { color:#cce5ff; line-height:1.6; }
+    footer { text-align:center; padding:20px; color:#88aaff; font-size:0.9rem; border-top:1px solid rgba(100,150,255,0.2); }
+    @media (max-width:768px) { .info-section { flex-direction:column } .info-card { margin:10px 0 } h1 { font-size:2rem } }
+    .video-js .vjs-control-bar { background: rgba(0,10,30,0.8) !important; backdrop-filter: blur(5px); }
+    .video-js .vjs-big-play-button { background: rgba(79,172,254,0.7) !important; border:none !important; width:80px !important; height:80px !important; border-radius:50% !important; line-height:80px !important; top:50% !important; left:50% !important; transform: translate(-50%,-50%); font-size:3em; text-shadow:0 0 10px rgba(0,0,0,0.5); }
+    .video-js .vjs-playback-rate .vjs-menu-button-popup .vjs-menu .vjs-menu-content { background: rgba(0,10,30,0.9) !important; border-radius:8px; border:1px solid rgba(100,150,255,0.3); }
+    .video-js .vjs-menu-button-popup .vjs-menu { bottom:3em; }
+    .video-js .vjs-icon-placeholder:before { color:#4facfe; text-shadow:0 0 5px rgba(79,172,254,0.5); }
+    .error-message { display:none; position:absolute; top:50%; left:50%; transform: translate(-50%,-50%); background: rgba(200,50,50,0.8); padding:20px; border-radius:10px; text-align:center; z-index:10; max-width:80%; }
+
+    /* Upload / status styles */
+    #upload-form { display:flex; gap:10px; justify-content:center; align-items:center; margin-top:12px; flex-wrap:wrap; }
+    #upload-file-input { padding:8px; border-radius:8px; background:rgba(0,10,30,0.8); color:white; border:1px solid rgba(100,150,255,0.3); }
+    #upload-button { padding:10px 18px; border-radius:8px; border:none; background: linear-gradient(to right, #4facfe, #00f2fe); color:white; font-weight:bold; cursor:pointer; }
+    #upload-status { margin-top:12px; text-align:center; display:none; padding:10px; border-radius:8px; }
+
+    /* long video-id wrapping on mobile */
+    .success-message code,
+    .success-message .video-id {
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Secret Video Streaming Platform</h1>
+      <p class="subtitle">Watch secret videos using secret id or upload new content with our premium streaming service.</p>
+    </header>
+
+    <div class="video-input-section">
+      <form id="video-form">
+        <input type="text" id="video-id-input" placeholder="Enter Video ID here..." required>
+        <button type="submit">Load Video</button>
+      </form>
+
+      <!-- Upload form -->
+      <form id="upload-form">
+        <input id="upload-file-input" type="file" accept="video/*">
+        <button id="upload-button" type="button">Upload Video</button>
+      </form>
+
+      <div id="upload-status"></div>
+      <div id="status-message"></div>
+    </div>
+
+    <div class="player-content-wrapper" id="player-content-wrapper">
+      <div class="player-container">
+        <div class="error-message" id="player-error-message">
+          <h3><i class="fas fa-exclamation-triangle"></i> Stream Error</h3>
+          <p id="error-text">Failed to load video stream</p>
+        </div>
+
+        <div class="video-wrapper">
+          <video id="my-video" class="video-js vjs-big-play-centered" controls preload="auto"
+                 poster="https://images.unsplash.com/photo-1574717024453-354056aafa98?auto=format&fit=crop&w=1200&q=80"
+                 data-setup='{}'>
+            <p class="vjs-no-js">
+              To view this video please enable JavaScript, and consider upgrading to a web browser that
+              <a href="https://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>
+            </p>
+          </video>
+        </div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-card">
+          <h3>Stream Information</h3>
+          <p>Your Uploaded Content</p>
+          <p>Adaptive HLS Streaming</p>
+          <div class="tech-badges">
+            <span class="badge">HLS</span>
+            <span class="badge">Adaptive</span>
+            <span class="badge">Your Content</span>
+          </div>
+        </div>
+
+        <div class="info-card">
+          <h3>Player Features</h3>
+          <p>Quality Selection</p>
+          <p>Playback Speed Control</p>
+          <div class="tech-badges">
+            <span class="badge">Video.js</span>
+            <span class="badge">HD Ready</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="features">
+        <div class="feature-card"><i class="fas fa-sliders-h"></i><h3>Quality Selection</h3><p>Manually choose between different resolutions for optimal viewing.</p></div>
+        <div class="feature-card"><i class="fas fa-tachometer-alt"></i><h3>Playback Speed</h3><p>Adjust video speed from 0.5x to 2.0x to watch at your pace.</p></div>
+        <div class="feature-card"><i class="fas fa-broadcast-tower"></i><h3>Adaptive Streaming</h3><p>Automatic quality adjustment for smooth playback.</p></div>
+        <div class="feature-card"><i class="fas fa-expand-arrows-alt"></i><h3>Fullscreen Mode</h3><p>Immersive viewing experience with high-definition fullscreen.</p></div>
+      </div>
+
+      <footer>
+        <p>Your Premium Streaming Service | Powered by Video.js</p>
+      </footer>
+    </div>
+  </div>
+
+  <script src="https://vjs.zencdn.net/7.20.3/video.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/videojs-contrib-quality-levels@2.1.0/dist/videojs-contrib-quality-levels.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/videojs-hls-quality-selector@1.1.4/dist/videojs-hls-quality-selector.min.js"></script>
+
+  <script>
+    /* ---------- DOM refs ---------- */
+    const videoForm = document.getElementById('video-form');
+    const videoIdInput = document.getElementById('video-id-input');
+    const statusMessage = document.getElementById('status-message');
+    const playerContentWrapper = document.getElementById('player-content-wrapper');
+    const playerErrorMessage = document.getElementById('player-error-message');
+    const errorText = document.getElementById('error-text');
+
+    const uploadFileInput = document.getElementById('upload-file-input');
+    const uploadButton = document.getElementById('upload-button');
+    const uploadStatus = document.getElementById('upload-status');
+
+    /* ---------- Video.js player ---------- */
+    const player = videojs('my-video', {
+      controlBar: {
+        children: [
+          'playToggle','volumePanel','currentTimeDisplay','timeDivider',
+          'durationDisplay','progressControl','remainingTimeDisplay',
+          'customControlSpacer','playbackRateMenuButton','fullscreenToggle'
+        ]
+      }
+    });
+
+    player.ready(() => {
+      player.playbackRates([0.5,0.75,1,1.25,1.5,1.75,2]);
+      console.log('Player ready');
+    });
+
+    function showStatus(message, type='info'){
+      statusMessage.textContent = message;
+      statusMessage.className = `status-${type}`;
+      statusMessage.style.display = 'block';
+    }
+
+    /* ---------- Quality selector robustness ---------- */
+    function initHlsQualitySelectorWithGuard() {
+      if (player._hlsQualitySelectorInit) return;
+      try {
+        player.hlsQualitySelector({ displayCurrentQuality: true, placementIndex: 8 });
+        player._hlsQualitySelectorInit = true;
+        console.log('hlsQualitySelector initialized (guarded)');
+      } catch (e) {
+        console.warn('hlsQualitySelector init failed', e);
+      }
+    }
+
+    function logQualityLevels() {
+      const ql = player.qualityLevels && player.qualityLevels();
+      if (!ql) { console.log('No qualityLevels() API'); return null; }
+      console.log('qualityLevels length =', ql.length);
+      const info = [];
+      for (let i=0; i<ql.length; i++) {
+        const lvl = ql[i];
+        const obj = { index:i, height:lvl.height, width:lvl.width, bitrate:lvl.bitrate||lvl.bandwidth, id:lvl.id, enabled:lvl.enabled };
+        console.log(i, obj);
+        info.push(obj);
+      }
+      return info;
+    }
+
+    function addQualityFallbackIfNeeded() {
+      const ql = player.qualityLevels && player.qualityLevels();
+      if (!ql || ql.length <= 1) return;
+      const pluginMenuItems = document.querySelectorAll('.vjs-hls-quality-selector .vjs-menu-content li');
+      if (pluginMenuItems && pluginMenuItems.length > 0) return;
+      if (document.getElementById('quality-fallback-select')) return;
+
+      const sel = document.createElement('select');
+      sel.id = 'quality-fallback-select';
+      sel.title = 'Quality';
+      sel.style.padding = '6px';
+      sel.style.borderRadius = '6px';
+      sel.style.fontSize = '12px';
+      sel.style.background = 'rgba(0,0,0,0.6)';
+      sel.style.color = 'white';
+      sel.style.border = '1px solid rgba(79,172,254,0.2)';
+
+      const autoOpt = document.createElement('option');
+      autoOpt.value = 'auto';
+      autoOpt.text = 'Auto';
+      sel.appendChild(autoOpt);
+
+      for (let i=0;i<ql.length;i++){
+        const h = ql[i].height || Math.round((ql[i].bitrate||ql[i].bandwidth||0)/1000) + 'kbps';
+        const o = document.createElement('option');
+        o.value = String(i);
+        o.text = (ql[i].height ? `${ql[i].height}p` : h);
+        sel.appendChild(o);
+      }
+
+      sel.addEventListener('change', function(){
+        const v = sel.value;
+        if (v === 'auto') { for (let j=0;j<ql.length;j++) ql[j].enabled = true; }
+        else { for (let j=0;j<ql.length;j++) ql[j].enabled = (j===Number(v)); }
+      });
+
+      const container = document.createElement('div');
+      container.style.position = 'absolute';
+      container.style.right = '12px';
+      container.style.bottom = '56px';
+      container.style.zIndex = '999';
+      container.appendChild(sel);
+      player.el().appendChild(container);
+      console.log('Added quality fallback select');
+    }
+
+    function waitAndInitQualitySelector(timeoutMs = 5000, intervalMs = 150) {
+      let elapsed = 0;
+      const t = setInterval(() => {
+        const ql = player.qualityLevels && player.qualityLevels();
+        if (ql && ql.length > 0) {
+          clearInterval(t);
+          logQualityLevels();
+          initHlsQualitySelectorWithGuard();
+          setTimeout(addQualityFallbackIfNeeded, 300);
+          return;
+        }
+        elapsed += intervalMs;
+        if (elapsed >= timeoutMs) {
+          clearInterval(t);
+          console.warn('Timed out waiting for qualityLevels — will still try init/fallback');
+          logQualityLevels();
+          initHlsQualitySelectorWithGuard();
+          setTimeout(addQualityFallbackIfNeeded, 300);
+        }
+      }, intervalMs);
+    }
+
+    // try init at a few player lifecycle events (helps inconsistent HLS implementations)
+    player.on('loadedmetadata', () => waitAndInitQualitySelector(5000,150));
+    player.on('loadeddata',     () => waitAndInitQualitySelector(5000,150));
+    player.on('play',           () => waitAndInitQualitySelector(3000,150));
+
+    /* ---------- Periodic playlist refresh (while video loaded) ---------- */
+    const PLAYLIST_REFRESH_MS = 14 * 60 * 1000; // 14 minutes (safe under 1800s)
+    let _playlistRefreshTimer = null;
+
+    function refreshPlaylistsPreserve() {
+      try {
+        const currentTime = (player.currentTime && player.currentTime()) || 0;
+        const wasPaused = (player.paused && player.paused()) || false;
+        const currentSrc = (player.currentSrc && player.currentSrc()) || '';
+        if (!currentSrc) return;
+        player.src({ src: currentSrc, type: 'application/x-mpegURL' });
+        player.one('loadedmetadata', function() {
+          try { if (typeof currentTime === 'number') player.currentTime(currentTime); } catch (e) {}
+          if (!wasPaused) player.play().catch(()=>{});
+          waitAndInitQualitySelector(5000,150);
+        });
+      } catch (e) { console.warn('refreshPlaylistsPreserve failed', e); }
+    }
+
+    function startPlaylistAutoRefresh() {
+      stopPlaylistAutoRefresh();
+      try {
+        const src = (player.currentSrc && player.currentSrc()) || '';
+        if (!src) return;
+      } catch (_) { return; }
+      _playlistRefreshTimer = setInterval(() => {
+        try {
+          const src = (player.currentSrc && player.currentSrc()) || '';
+          if (src) refreshPlaylistsPreserve();
+        } catch (e) { console.warn('Periodic refresh error', e); }
+      }, PLAYLIST_REFRESH_MS);
+    }
+
+    function stopPlaylistAutoRefresh() {
+      if (_playlistRefreshTimer) { clearInterval(_playlistRefreshTimer); _playlistRefreshTimer = null; }
+    }
+
+    window.addEventListener('beforeunload', stopPlaylistAutoRefresh);
+
+    /* ---------- Existing video load handler ---------- */
+    videoForm.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      const videoId = videoIdInput.value.trim();
+      if (!videoId) { showStatus('Please enter a Video ID.', 'error'); return; }
+
+      stopPlaylistAutoRefresh(); // reset before loading new source
+      playerContentWrapper.style.display = 'none';
+      player.pause();
+      showStatus(`🔍 Validating Video ID: ${videoId}...`, 'info');
+
+      try {
+        const response = await fetch(`/api/status/${videoId}`);
+        if (response.status === 404) throw new Error('Video not found. Please check the ID and try again.');
+        if (!response.ok) throw new Error(`Server returned an error: ${response.statusText}`);
+        const data = await response.json();
+
+        if (data.status === 'ready') {
+          statusMessage.style.display = 'none';
+          playerContentWrapper.style.display = 'block';
+
+          const playlistUrl = `/api/master/${videoId}`;
+          player.src({ src: playlistUrl, type: 'application/x-mpegURL' });
+
+          waitAndInitQualitySelector(5000,150);
+
+          player.play().catch(e => console.warn('Autoplay prevented', e));
+
+          // start periodic refresh for this loaded video
+          startPlaylistAutoRefresh();
+        } else if (data.status === 'processing') {
+          showStatus('⏳ This video is still processing. Please wait a few moments and try again.', 'warning');
+        } else {
+          throw new Error(`Unknown video status: "${data.status}"`);
+        }
+      } catch (err) {
+        console.error('Failed to load video:', err);
+        showStatus(`Error: ${err.message}`, 'error');
+        playerContentWrapper.style.display = 'none';
+      }
+    });
+
+    player.on('error', function() {
+      const error = player.error();
+      console.error('Player error:', error);
+      errorText.textContent = `Error: ${error ? error.message : 'Failed to load video stream'}`;
+      playerErrorMessage.style.display = 'block';
+    });
+
+    player.on('loadstart', function() {
+      playerErrorMessage.style.display = 'none';
+    });
+
+    /* ---------- Upload logic (keeps SSE parsing simple) ---------- */
+    function showUploadStatus(msg, cls='info') {
+      uploadStatus.textContent = msg;
+      uploadStatus.className = '';
+      uploadStatus.style.display = 'block';
+      if (cls === 'error') uploadStatus.classList.add('status-error');
+      else if (cls === 'warning') uploadStatus.classList.add('status-warning');
+      else uploadStatus.classList.add('status-info');
+    }
+
+    function sanitizeFilename(name) {
+      const base = name.split('/').pop().split('\\').pop();
+      const trimmed = base.replace(/\s+/g, '');
+      return trimmed;
+    }
+
+    uploadButton.addEventListener('click', async function () {
+      const file = uploadFileInput.files && uploadFileInput.files[0];
+      if (!file) { showUploadStatus('Please choose a video file to upload.', 'error'); return; }
+
+      const safeName = sanitizeFilename(file.name);
+      if (!safeName || safeName.indexOf('.') === -1) {
+        showUploadStatus('Filename must include an extension (e.g. video.mp4).', 'error');
+        return;
+      }
+
+      showUploadStatus('Requesting upload URL...', 'info');
+
+      try {
+        const genRes = await fetch(`/api/generate-upload-url/${encodeURIComponent(safeName)}`, { method:'POST' });
+        if (!genRes.ok) throw new Error(`Failed to get upload URL: ${genRes.statusText}`);
+        const genJson = await genRes.json();
+        const presignedUrl = genJson.presigned_url;
+        const videoId = genJson.video_id;
+        if (!presignedUrl || !videoId) throw new Error('Server response missing presigned_url or video_id');
+
+        showUploadStatus('Starting upload... (SSE will report processing progress)', 'info');
+
+        // open SSE to listen for processing status BEFORE starting upload
+        let es;
+        try { es = new EventSource(`/api/stream-status/${encodeURIComponent(videoId)}`); } catch (e) { console.warn('EventSource failed to open', e); }
+
+        if (es) {
+          es.onmessage = function (evt) {
+            try {
+              const payload = JSON.parse(evt.data);
+              if (payload && payload.data && payload.data.status) {
+                showUploadStatus(`Processing status: ${payload.data.status}`, payload.data.status === 'ready' ? 'info' : 'warning');
+                if (payload.data.status === 'ready') {
+                  // show success message (wrap id for mobile) but DO NOT trigger playlist refresh here
+                  const successEl = document.createElement('div');
+                  successEl.className = 'success-message';
+                  successEl.innerHTML = `
+                    <h3><i class="fas fa-check-circle"></i> Video Processing Complete</h3>
+                    <p>Your video is now ready to watch!</p>
+                    <p>Video ID: <strong><code class="video-id">${videoId}</code></strong></p>
+                    <p>Copy this ID to watch your video later.</p>
+                  `;
+                  // append to upload-status area
+                  uploadStatus.style.display = 'none';
+                  document.getElementById('status-message').style.display = 'none';
+                  document.getElementById('upload-status').insertAdjacentElement('afterend', successEl);
+                  es.close();
+                }
+              }
+            } catch (err) { console.warn('Invalid SSE payload', err); }
+          };
+          es.onerror = function (err) { console.warn('SSE error', err); };
+        }
+
+        // perform PUT to presigned URL
+        const contentType = file.type || 'application/octet-stream';
+        const putRes = await fetch(presignedUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': contentType },
+          body: file
+        });
+
+        if (!putRes.ok) {
+          const text = await putRes.text().catch(()=>'');
+          throw new Error(`Upload failed: ${putRes.status} ${putRes.statusText} ${text}`);
+        }
+
+        showUploadStatus('Upload complete. Waiting for server processing (check notifications).', 'info');
+        if (!es) showUploadStatus('Upload complete. Unable to open SSE — please check processing status from server.', 'warning');
+
+      } catch (err) {
+        console.error('Upload error', err);
+        showUploadStatus(`Upload error: ${err.message}`, 'error');
+      }
+    });
+
+    // Note: we intentionally DO NOT call refreshPlaylistsPreserve() from the SSE handler.
+    // Periodic refresh runs independently while the player has a loaded source.
+
+  </script>
+</body>
+</html>
