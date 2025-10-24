@@ -72,7 +72,7 @@ The application follows this flow:
 ├── go.sum # Go module checksums
 └── README.md # This file
 
----
+```
 
 ## Setup & Installation
 
