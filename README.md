@@ -184,7 +184,7 @@ You need to run Redis, MinIO, Nginx, the Celery Worker, and the Go API.
     ### For Linux Users:
     ```bash
     # Copy the nginx configuration to your Nginx sites
-    sudo cp nginx/nginx.conf /etc/nginx/sites-available/keyflicks
+    sudo cp nginx/conf/nginx.conf /etc/nginx/sites-available/keyflicks
     sudo ln -s /etc/nginx/sites-available/keyflicks /etc/nginx/sites-enabled/
     
     # Copy frontend files to the appropriate directory
@@ -194,7 +194,7 @@ You need to run Redis, MinIO, Nginx, the Celery Worker, and the Go API.
     ### For Windows Users:
     ```bash
     # Copy the nginx configuration (replace C:\nginx with your actual nginx install path)
-    copy nginx\nginx.conf C:\nginx\conf\nginx.conf
+    copy nginx\conf\nginx.conf C:\nginx\conf\nginx.conf
     
     # Copy frontend files to nginx html directory
     xcopy nginx\html\* C:\nginx\html\ /E /Y
