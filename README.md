@@ -49,6 +49,8 @@ The application follows this flow:
 
 ## Project Structure
 
+```
+
 /keyflicks_app
 ├── cmd/api/ # Main Go application entrypoint (main.go)
 ├── internals/ # Internal Go packages (handlers, routes, store, celery, cache, etc.)
@@ -70,7 +72,7 @@ The application follows this flow:
 ├── go.sum # Go module checksums
 └── README.md # This file
 
-
+---
 
 ## Setup & Installation
 
