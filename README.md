@@ -10,6 +10,33 @@ A high-performance, secure video streaming application built with Go (Gin) and P
 
 KeyFlicks provides a private video hosting solution. Users can upload video content, which is then processed in the background into multiple quality levels suitable for adaptive streaming (HLS). Each uploaded video is assigned a unique ID. Playback is secured using dynamically generated signed URLs for video segments, ensuring only users with the correct video ID can view the content.
 
+## Application Screenshots
+
+### Upload Interface & Home Screen
+
+![Home Interface](Assets/Home_Interface.png)
+*Main application interface showing the home screen*
+
+![Upload Section](Assets/Upload_Section.png)
+*Video upload section with drag-and-drop functionality*
+
+![Uploaded Video](Assets/Uploaded_video.png)
+*Successfully uploaded video ready for playback*
+
+![Uploading Status](Assets/Final_uploading_status.png)
+*Real-time upload progress and processing status*
+
+### Video Player Features
+
+![Fullscreen Playback](Assets/Fullscreen.png)
+*Video playback in fullscreen mode*
+
+![Playback Controls](Assets/Playback_control.png)
+*Advanced playback controls and timeline*
+
+![Resolution Control](Assets/Resolution_control.png)
+*Adaptive bitrate streaming with resolution selection*
+
 ## Features
 
 * **Secure Upload:** Direct-to-storage uploads using pre-signed URLs (MinIO/S3).
@@ -226,33 +253,6 @@ You need to run Redis, MinIO, Nginx, the Celery Worker, and the Go API.
 * The frontend interface allows you to upload videos and play them back
 * API endpoints are available under `/api/...`
 * Video segments are served via `/videos/...`
-
-## Application Screenshots
-
-### Upload Interface & Home Screen
-
-![Home Interface](Assets/Home_Interface.png)
-*Main application interface showing the home screen*
-
-![Upload Section](Assets/Upload_Section.png)
-*Video upload section with drag-and-drop functionality*
-
-![Uploaded Video](Assets/Uploaded_video.png)
-*Successfully uploaded video ready for playback*
-
-![Uploading Status](Assets/Final_uploading_status.png)
-*Real-time upload progress and processing status*
-
-### Video Player Features
-
-![Fullscreen Playback](Assets/Fullscreen.png)
-*Video playback in fullscreen mode*
-
-![Playback Controls](Assets/Playback_control.png)
-*Advanced playback controls and timeline*
-
-![Resolution Control](Assets/Resolution_control.png)
-*Adaptive bitrate streaming with resolution selection*
 
 ## Usage
 
