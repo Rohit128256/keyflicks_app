@@ -78,26 +78,31 @@ The application follows this flow:
 
 ```
 
-/keyflicks_app
-├── cmd/api/ # Main Go application entrypoint (main.go)
-├── internals/ # Internal Go packages (handlers, routes, store, celery, cache, etc.)
-│ ├── handlers/
-│ ├── routes/
-│ ├── store/
-│ ├── celery/
-│ └── cache/
-├── worker_app/ # Python Celery worker code
-│ ├── app/
-│ │ ├── celery_app.py # Celery app definition
-│ │ └── tasks.py # Celery task definitions
-│ ├── requirements.txt
-│ └── ...
-├── nginx/ # Example Nginx configuration files and frontend files
-├── Assets/ # Contains images and screenshots
-├── minio_streaming_bucket_policy.json # MinIO bucket policy
-├── go.mod # Go module definition
-├── go.sum # Go module checksums
-└── README.md # This file
+keyflicks_app/
+├── backend/                     # Go backend application
+│   ├── cmd/
+│   │   └── my-app/
+│   │       └── main.go         # Application entry point
+│   ├── internals/              # Internal packages
+│   │   ├── handlers/           # HTTP request handlers
+│   │   ├── routes/             # API route definitions
+│   │   ├── s3_store/              # Storage layer (MinIO/S3)
+│   │   ├── celery/             # Celery client integration
+│   │   ├── cache/              # Redis caching layer
+│   │   └── signature/          # Methods for signing the playlist files
+│   ├── go.mod
+│   └── go.sum
+├── worker_application/                 # Python Celery worker
+│   ├── app/
+│   │   ├── celery_app.py       # Celery app definition
+│   │   └── tasks.py            # Video transcoding tasks
+│   └── requirements.txt        # Python dependencies
+├── nginx/                      # Nginx configuration and frontend
+│   ├── html/frontend_file.html                   # Frontend static files
+│   └── conf/nginx.conf              # Nginx configuration
+├── Assets/                     # Application screenshots
+├── minio_streaming_bucket_policy.json
+└── README.md
 
 ```
 
@@ -232,7 +237,7 @@ You need to run Redis, MinIO, Nginx, the Celery Worker, and the Go API.
 
 4.  **Run the Python Celery Worker:**
     ```bash
-    cd worker_app
+    cd worker_application
     python3 -m venv venv
     source venv/bin/activate
     pip install -r requirements.txt
@@ -241,10 +246,10 @@ You need to run Redis, MinIO, Nginx, the Celery Worker, and the Go API.
 
 5.  **Build and Run the Go API:**
     ```bash
-    cd cmd/api
-    go build -o ../../keyflicks_api
-    cd ../..
-    ./keyflicks_api
+    cd backend/cmd/my-app
+    go build -o ../../../keyflicksgo_app
+    cd ../../..
+    ./keyflicksgo_app
     ```
 
 ### Accessing the Application
