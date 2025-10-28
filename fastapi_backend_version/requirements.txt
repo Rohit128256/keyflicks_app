@@ -1,0 +1,10 @@
+fastapi
+boto3
+uvicorn
+python-dotenv
+requests
+celery
+redis
+sse-starlette
+aioboto3
+flpc
