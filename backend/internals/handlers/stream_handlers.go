@@ -3,11 +3,13 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"keyflicks_app/internals/cache"
 	"keyflicks_app/internals/celery"
 	"keyflicks_app/internals/s3_store"
+	"keyflicks_app/internals/schemas"
 	"keyflicks_app/internals/signature"
 	"log"
 	"mime"
@@ -21,6 +23,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 )
 
 type StreamHandler struct {
@@ -45,9 +48,34 @@ func NewStreamHandler(s3 *s3_store.S3Store, rds *cache.RedisDB, cel *celery.Cele
 	}
 }
 
-// presigned put url to upload video..
+// presigned put url to upload video..(ready for jwt auth)
 func (h *StreamHandler) Generate_upload_url(c *gin.Context) {
 
+	// taking the video info from the request
+	var UserReqInfo schemas.VideoUploadInfo
+	if err := c.ShouldBindJSON(&UserReqInfo); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if UserReqInfo.Title == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Title is mandatory"})
+		return
+	}
+
+	// basic auth step
+	user, exists := c.Get("currentUser")
+
+	if !exists {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	currUser := user.(*schemas.UserInDB)
+
+	currUserid := currUser.ID.String()
+
+	// upload link generate step
 	filename := c.Param("filename")
 
 	id := uuid.New().String()
@@ -79,7 +107,49 @@ func (h *StreamHandler) Generate_upload_url(c *gin.Context) {
 		})
 		return
 	}
+	// set the user_id for current video_id in redis
+	type DataToCache struct {
+		UserId string `json:"user_id"`
+		Title  string `json:"title"`
+		Desc   string `json:"description"`
+	}
 
+	cache_key := fmt.Sprintf("VideoInfoOf:%s", video_id)
+
+	// background_update
+	go func(data DataToCache) {
+		bgCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		b, err := json.Marshal(data)
+
+		if err != nil {
+			log.Printf("background cache update for video information is failed")
+			return
+		}
+
+		if h.redis != nil {
+			_ = h.redis.Set(bgCtx, cache_key, string(b), 24*3600)
+		}
+	}(DataToCache{
+		UserId: currUserid,
+		Title:  UserReqInfo.Title,
+		Desc:   UserReqInfo.Description,
+	})
+
+	// cookie update
+
+	c.SetCookie(
+		"Transcode_status", // cookie name
+		video_id,           // cookie value
+		3600*24*2,          // max age in seconds (60 days)
+		"/",                // path
+		"",                 // domain (frontend's domain in production)
+		true,               // secure (true = only send over HTTPS)
+		true,               // httpOnly (true = JavaScript can't read it)
+	)
+
+	// process the presigned url and response
 	proto := c.GetHeader("x-forwarded-proto")
 	if proto == "" {
 		proto = "http"
@@ -96,6 +166,7 @@ func (h *StreamHandler) Generate_upload_url(c *gin.Context) {
 		return
 	}
 
+	// if host is diffrent we'll point it to our nginx host directly ngnix will route it to s3 (nginx config may need some changes based on storage)
 	newBaseURL := fmt.Sprintf("%s://%s", proto, host)
 
 	public_presigned_url := strings.Replace(local_presigned_url, "http://localhost:9000", newBaseURL, -1)
@@ -170,9 +241,15 @@ func (h *StreamHandler) Handle_s3_event(c *gin.Context) {
 
 }
 
-// stream status sse handler
+// stream status sse handler (ready to use with jwt middleware)
 func (h *StreamHandler) Get_status(c *gin.Context) {
-	upload_id := c.Param("upload_id")
+
+	upload_id, err := c.Cookie("Transcode_status")
+
+	if err != nil {
+		c.JSON(http.StatusNoContent, gin.H{"error": "Video cookie missing !!"})
+		return
+	}
 
 	if upload_id == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "upload_id is required"})
@@ -185,60 +262,87 @@ func (h *StreamHandler) Get_status(c *gin.Context) {
 	c.Writer.Header().Set("Connection", "keep-alive")
 	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 
-	channel := fmt.Sprintf("job_status_%s", upload_id)
+	sseStream := fmt.Sprintf("job_status:%s", upload_id)
 
 	ctx := c.Request.Context()
-	pubsub := h.redis.Subscribe(ctx, channel)
-	// Ensure the subscription is closed when the handler exits
-	defer pubsub.Close()
-
-	// Use a channel to receive messages from Redis
-	redisChan := pubsub.Channel()
+	// This ensures a reconnecting user gets all messages.
+	lastMessageID := "0-0"
 
 	c.Stream(func(w io.Writer) bool {
-		select {
-		case msg := <-redisChan:
-			// A message was received from Redis
-			status := msg.Payload
+		// Use XRead to consume the stream
+		streams, err := h.redis.Client.XRead(ctx, &redis.XReadArgs{
+			Streams: []string{sseStream, lastMessageID}, // [stream_name, last_id_we_read]
+			Count:   1,                                  // Get one message at a time
+			Block:   5 * time.Second,                    // Wait up to 5 seconds for a message
+		}).Result()
+
+		if err != nil {
+			if errors.Is(err, redis.Nil) {
+				// This is a timeout, which is normal.
+				// It just means no new messages. Stay connected.
+				return true
+			}
+			if errors.Is(err, context.Canceled) {
+				// Client disconnected
+				log.Printf("SSE: Client disconnected for %s", upload_id)
+				return false
+			}
+			// A real Redis error
+			log.Printf("SSE: Redis stream error for %s: %v", upload_id, err)
+			return false // Close the connection
+		}
+
+		// We got a message, process it
+		if len(streams) > 0 && len(streams[0].Messages) > 0 {
+			msg := streams[0].Messages[0]
+			lastMessageID = msg.ID // IMPORTANT: Update so we get the *next* message
+
+			// Get status from message values
+			status, ok := msg.Values["status"].(string)
+			if !ok {
+				log.Printf("SSE: Malformed message in stream %s", sseStream)
+				return true // Skip bad message
+			}
+
 			log.Printf("SSE: Got status '%s' for upload %s", status, upload_id)
 
-			// The nested JSON structure from your Python code
+			// (Your JSON formatting logic is correct)
 			type sseInnerData struct {
 				Status string `json:"status"`
 			}
 			type sseOuterData struct {
 				Data sseInnerData `json:"data"`
 			}
-
-			// Create and marshal the data to JSON
 			ssePayload := sseOuterData{Data: sseInnerData{Status: status}}
 			jsonBytes, _ := json.Marshal(ssePayload)
 
-			// Write the SSE-formatted message to the client
-			// The format is "data: <json-payload>\n\n"
 			fmt.Fprintf(w, "data: %s\n\n", string(jsonBytes))
-
-			// Flush the writer to ensure the message is sent immediately
 			c.Writer.Flush()
 
-			// If the job is done, close the connection
+			// --- 6. HANDLE FINAL MESSAGE & CLEANUP ---
 			if status == "ready" || status == "failed" {
-				log.Printf("SSE: Closing connection for upload %s", upload_id)
+				log.Printf("SSE: Got final status '%s' for %s. Closing and cleaning up.", status, upload_id)
+
+				// Delete the cookie
+				c.SetCookie("Transcode_status", "", -1, "/", "", true, true)
+
+				// Delete the Redis Stream
+				// We run this in a background goroutine so it doesn't
+				// delay closing the connection.
+				go func() {
+					h.redis.Client.Del(context.Background(), sseStream)
+					log.Printf("SSE: Cleaned up stream %s", sseStream)
+				}()
+
 				return false // false = close stream
 			}
-
-			// Keep the connection open for the next message
-			return true // true = continue stream
-
-		case <-ctx.Done():
-			// The client has disconnected
-			log.Printf("SSE: Client disconnected for upload %s", upload_id)
-			return false // false = close stream
 		}
+
+		return true // true = continue stream
 	})
 }
 
-// handler for sigining playlist...
+// handler for sigining playlist...(ready to use with auth middleware)
 func (h *StreamHandler) Sign_segments(c *gin.Context) {
 	videoID := c.Param("video_id")
 	resolutionPath := c.Param("resolution_path")
@@ -297,6 +401,7 @@ func (h *StreamHandler) Sign_segments(c *gin.Context) {
 
 		b, err := json.Marshal(data)
 		if err != nil {
+			log.Printf("Background cache update failed for signed playlist")
 			return
 		}
 		if h.redis != nil {
@@ -311,7 +416,7 @@ func (h *StreamHandler) Sign_segments(c *gin.Context) {
 	c.Data(http.StatusOK, "application/vnd.apple.mpegurl", []byte(rewritten))
 }
 
-// handler to get the master playlist
+// handler to get the master playlist (ready to use with auth middleware)
 func (h *StreamHandler) Modified_master(c *gin.Context) {
 
 	videoId := c.Param("video_id")
@@ -373,7 +478,7 @@ func (h *StreamHandler) Modified_master(c *gin.Context) {
 
 }
 
-// handler function to see the status of video using video id
+// handler function to see the status of video using video id (can be used with auth middleware needs to be modified according to database (currently relies on s3))
 func (h *StreamHandler) Stream_status(c *gin.Context) {
 	uploadID := c.Param("upload_id")
 	cacheKey := fmt.Sprintf("upload_status:%s", uploadID)

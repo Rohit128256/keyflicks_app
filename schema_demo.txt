@@ -1,0 +1,193 @@
+-- Enable the UUID extension if you haven't already
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+CREATE TABLE users (
+    -- Use UUID for a unique, non-sequential user ID
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    
+    email VARCHAR(255) UNIQUE NOT NULL,
+    hashed_password TEXT NOT NULL,
+    
+    -- Optional: a display name for the user
+    username VARCHAR(50) UNIQUE NOT NULL,
+    dob DATE NOT NULL,
+    
+    -- Timestamps to track when the user account was created and last updated
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Create an index on email for faster login lookups
+CREATE INDEX idx_users_email ON users(email);
+
+
+CREATE TABLE videos (
+    -- This ID should be the same as the upload_id you generate in your app
+    id UUID PRIMARY KEY,
+    
+    -- Foreign key to link the video to the user who uploaded it
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    like_count BIGINT NOT NULL DEFAULT 0,
+    comment_count BIGINT NOT NULL DEFAULT 0,
+    
+    
+    -- Timestamps for tracking
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Create an index on user_id to quickly fetch all videos for a specific user
+CREATE INDEX idx_videos_user_id ON videos(user_id);
+
+
+CREATE TABLE playlists (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    
+    -- Foreign key to link the playlist to its creator
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    
+    -- Timestamps
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Create an index on user_id to quickly fetch all playlists for a specific user
+CREATE INDEX idx_playlists_user_id ON playlists(user_id);
+
+
+CREATE TABLE playlist_videos (
+    playlist_id UUID NOT NULL REFERENCES playlists(id) ON DELETE CASCADE,
+    video_id UUID NOT NULL REFERENCES videos(id) ON DELETE CASCADE,
+    
+    -- The order of the video within a specific playlist
+    video_order INT NOT NULL,
+    
+    -- Timestamps
+    added_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    
+    -- A composite primary key ensures that a video can only be in a playlist once
+    PRIMARY KEY (playlist_id, video_id)
+);
+
+-- Create indexes for efficient lookups in both directions
+CREATE INDEX idx_playlist_videos_playlist_id ON playlist_videos(playlist_id);
+CREATE INDEX idx_playlist_videos_video_id ON playlist_videos(video_id);
+
+
+CREATE TABLE video_likes (
+    -- A unique identifier for the like event itself
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    
+    -- The user who performed the like action
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    
+    -- The video that was liked
+    video_id UUID NOT NULL REFERENCES videos(id) ON DELETE CASCADE,
+    
+    -- The type of reaction (e.g., 'like', 'dislike', 'heart'). 
+    -- We start with just 'like' but the column is ready for more.
+    type VARCHAR(20) NOT NULL DEFAULT 'like',
+    
+    -- Timestamp for when the like was created (can be used as "liked at")
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    
+    -- A unique constraint to ensure a user can only like a video once.
+    -- If you later want to allow different 'types', you could change this to UNIQUE(user_id, video_id, type)
+    UNIQUE (user_id, video_id)
+);
+
+-- Indexes for fast lookups
+CREATE INDEX idx_video_likes_video_id ON video_likes(video_id);
+CREATE INDEX idx_video_likes_user_id ON video_likes(user_id);
+
+
+CREATE TABLE comments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    
+    -- The user who wrote the comment
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    
+    -- The video the comment is on
+    video_id UUID NOT NULL REFERENCES videos(id) ON DELETE CASCADE,
+    
+    -- The text of the comment itself
+    text TEXT NOT NULL,
+    
+    -- For nested comments: if this is a reply to another comment, 
+    -- this links to the parent comment's ID.
+    -- If it's a top-level comment, this can be NULL.
+    parent_id UUID REFERENCES comments(id) ON DELETE CASCADE,
+    
+    -- Timestamps
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Indexes for fast lookups
+CREATE INDEX idx_comments_video_id ON comments(video_id);
+CREATE INDEX idx_comments_user_id ON comments(user_id);
+CREATE INDEX idx_comments_parent_id ON comments(parent_id); -- Crucial for efficiently loading reply threads
+
+
+-- Create a function that the trigger will execute
+CREATE OR REPLACE FUNCTION trigger_set_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
+-- This function works for any table with an 'updated_at' column
+CREATE OR REPLACE FUNCTION trigger_set_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Apply it to tables where ALL updates should change the timestamp
+CREATE TRIGGER set_timestamp
+    BEFORE UPDATE ON users
+    FOR EACH ROW
+    EXECUTE FUNCTION trigger_set_timestamp();
+
+CREATE TRIGGER set_timestamp
+    BEFORE UPDATE ON playlists
+    FOR EACH ROW
+    EXECUTE FUNCTION trigger_set_timestamp();
+
+CREATE TRIGGER set_timestamp
+    BEFORE UPDATE ON comments
+    FOR EACH ROW
+    EXECUTE FUNCTION trigger_set_timestamp();
+
+
+
+-- This function is specific to the videos table structure
+CREATE OR REPLACE FUNCTION trigger_set_video_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Only update the timestamp if these core metadata fields change
+  IF (OLD.title IS DISTINCT FROM NEW.title) OR
+     (OLD.description IS DISTINCT FROM NEW.description) THEN
+    NEW.updated_at = NOW();
+  END IF;
+  -- Ignore changes to like_count and other counters
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Apply the specific trigger to the videos table
+CREATE TRIGGER set_video_timestamp
+    BEFORE UPDATE ON videos
+    FOR EACH ROW
+    EXECUTE FUNCTION trigger_set_video_timestamp();

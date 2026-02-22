@@ -2,7 +2,9 @@ package s3_store
 
 import (
 	"context"
+	"fmt"
 	"io"
+	"log"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -75,4 +77,65 @@ func (s *S3Store) ListObjects(ctx context.Context, bucket string, prefix string)
 	// 3. The 'output.Contents' field is a slice of objects,
 	// exactly like Python's resp.get("Contents", []).
 	return output.Contents, nil
+}
+
+// function to put an object to the s3Store
+func (s *S3Store) PutObject(ctx context.Context, bucket, key string, body io.Reader, contentType string) (*s3.PutObjectOutput, error) {
+	input := &s3.PutObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+		Body:   body,
+	}
+
+	if contentType != "" {
+		input.ContentType = aws.String(contentType)
+	}
+
+	// perform the upload
+	out, err := s.client.PutObject(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+
+	return out, nil
+}
+
+// DeleteObjectsByPrefix finds all objects with a given prefix and deletes them.
+func (s *S3Store) DeleteObjectsByPrefix(ctx context.Context, bucket, prefix string) error {
+	// 1. List all objects with the prefix
+	listOut, err := s.client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
+		Bucket: aws.String(bucket),
+		Prefix: aws.String(prefix),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to list objects: %w", err)
+	}
+
+	// If there are no objects, we're done
+	if len(listOut.Contents) == 0 {
+		log.Printf("No objects found in bucket %s with prefix %s", bucket, prefix)
+		return nil
+	}
+
+	// 2. Prepare the list of objects to delete
+	var objectsToDelete []types.ObjectIdentifier
+	for _, obj := range listOut.Contents {
+		objectsToDelete = append(objectsToDelete, types.ObjectIdentifier{
+			Key: obj.Key,
+		})
+	}
+
+	// 3. Delete the objects in a batch
+	// Note: This simple version assumes < 1000 objects.
+	// For HLS/DASH, this is almost always true.
+	_, err = s.client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+		Bucket: aws.String(bucket),
+		Delete: &types.Delete{Objects: objectsToDelete},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to delete objects: %w", err)
+	}
+
+	log.Printf("Successfully deleted %d objects from bucket %s with prefix %s", len(objectsToDelete), bucket, prefix)
+	return nil
 }
