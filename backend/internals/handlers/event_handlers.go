@@ -34,11 +34,12 @@ func (h *EventHandler) ToggleLike(c *gin.Context) {
 
 	currUser := user.(*schemas.UserInDB)
 
-	curruserName := currUser.Username
+	curruserId := currUser.ID.String()
 
 	// defining the keys for counter and sets
-	stateKey := fmt.Sprintf("vid:%s:user:%s", video_id, curruserName)
+	stateKey := fmt.Sprintf("vid:%s:user:%s", video_id, curruserId)
 	dirtyStateKey := "sync:dirty_interactions"
+	dirtyLikeKey := "sync:dirty_video_counts"
 	counterKey := fmt.Sprintf("vid:%s:stats", video_id)
 
 	incrCount := 0
@@ -52,14 +53,19 @@ func (h *EventHandler) ToggleLike(c *gin.Context) {
 
 	if actionType == "like" {
 		pipe.Set(c, stateKey, "like", 5*time.Hour)
-		pipe.SAdd(c, dirtyStateKey, fmt.Sprintf("%s:%s", video_id, curruserName))
+		pipe.SAdd(c, dirtyStateKey, fmt.Sprintf("%s:%s", video_id, curruserId))
 	} else {
 		pipe.Del(c, stateKey)
-		pipe.SAdd(c, dirtyStateKey, fmt.Sprintf("%s:%s", video_id, curruserName))
+		pipe.SAdd(c, dirtyStateKey, fmt.Sprintf("%s:%s", video_id, curruserId))
 	}
 
 	// Queue the increment and capture the command reference to read the result later
+	pipe.SAdd(c, dirtyLikeKey, video_id)
 	incrCmd := pipe.HIncrBy(c, counterKey, "likes", int64(incrCount))
+
+	// Extending Expiration time on each interaction like a sliding window to avoid likes count writing failure
+	expiration := time.Duration(30) * time.Minute
+	pipe.Expire(c, counterKey, expiration)
 
 	// Fire all 3 commands in ONE single network trip!
 	_, err := pipe.Exec(c)
@@ -73,13 +79,6 @@ func (h *EventHandler) ToggleLike(c *gin.Context) {
 
 	// preventing race condition by increamenting the counter blindly before checking the db
 	if newCount == 1 || newCount == -1 {
-
-		err := h.redis.Expire(c, counterKey, 60)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to set expiration for counter. Memory Leak can occur."})
-			return
-		}
-
 		videoInfo, err := h.db.GetVideoDetails(c, video_id)
 		if err != nil {
 			h.redis.Remove(c, counterKey)
