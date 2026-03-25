@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"keyflicks_app/internals/schemas"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgconn"
 
@@ -143,4 +144,142 @@ func (s *DbStore) GetVideoDetails(ctx context.Context, video_id string) (*schema
 	}
 
 	return &video, nil
+}
+
+func (s *DbStore) GetLikeState(ctx context.Context, video_id string, user_id string) (*schemas.GetlikeState, error) {
+	var LikeState schemas.GetlikeState
+
+	query := `
+			SELECT 
+				v.like_count, 
+				EXISTS(
+					SELECT 1 FROM video_likes vl 
+					WHERE vl.video_id = v.id AND vl.user_id = $2 AND vl.type = 'like'
+				)
+			FROM videos v 
+			WHERE v.id = $1;
+	`
+
+	err := s.db.QueryRow(ctx, query, video_id, user_id).Scan(LikeState.VideoLikes, LikeState.CurrUserLiked)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &LikeState, nil
+
+}
+
+func (s *DbStore) GetComments(ctx context.Context, videoID string, parentID *string, cursor *time.Time, limit int) ([]schemas.CommentResponse, error) {
+	var query strings.Builder
+
+	// Pre-allocate slice capacity to reduce memory re-allocations during high traffic
+	args := make([]any, 0, 4)
+
+	// 1. Base Query
+	query.WriteString(`
+		SELECT 
+			c.id, c.parent_id, c.text, c.reply_counts, c.created_at, 
+			u.id AS user_id, u.username
+		FROM comments c
+		JOIN users u ON c.user_id = u.id
+		WHERE c.video_id = $1
+	`)
+	args = append(args, videoID)
+	argID := 2 //video_id and limit is confirmed that's why bydefault 2
+
+	// 2. Dynamic Parent ID (Fixes the "OR IS NULL" planner issue)
+	if parentID == nil {
+		query.WriteString(` AND c.parent_id IS NULL`)
+	} else {
+		fmt.Fprintf(&query, ` AND c.parent_id = $%d`, argID)
+		args = append(args, *parentID)
+		argID++
+	}
+
+	// 3. Dynamic Keyset Pagination (Cursor)
+	if cursor != nil {
+		fmt.Fprintf(&query, ` AND c.created_at < $%d`, argID)
+		args = append(args, *cursor)
+		argID++
+	}
+
+	// 4. Sort and Limit
+	fmt.Fprintf(&query, ` ORDER BY c.created_at DESC LIMIT $%d`, argID)
+	args = append(args, limit)
+
+	// 5. Execute Query
+	rows, err := s.db.Query(ctx, query.String(), args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute GetComments query: %w", err)
+	}
+	defer rows.Close()
+
+	// Pre-allocate to the limit to avoid resizing the array under load
+	comments := make([]schemas.CommentResponse, 0, limit)
+
+	for rows.Next() {
+		var c schemas.CommentResponse
+		var pID *string // pgx natively supports scanning directly into a *string for NULLs
+
+		err := rows.Scan(
+			&c.ID, &pID, &c.Text, &c.ReplyCounts, &c.CreatedAt,
+			&c.Author.UserID, &c.Author.Username,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan comment row: %w", err)
+		}
+
+		c.ParentID = pID
+		comments = append(comments, c)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows iteration error in GetComments: %w", err)
+	}
+
+	return comments, nil
+}
+
+func (s *DbStore) GetUserTopLevelComments(ctx context.Context, videoID string, userID string) ([]schemas.CommentResponse, error) {
+	query := `
+		SELECT 
+			c.id, c.parent_id, c.text, c.reply_counts, c.created_at, 
+			u.id AS user_id, u.username
+		FROM comments c
+		JOIN users u ON c.user_id = u.id
+		WHERE c.video_id = $1 
+		  AND c.user_id = $2 
+		  AND c.parent_id IS NULL
+		ORDER BY c.created_at DESC
+	`
+
+	rows, err := s.db.Query(ctx, query, videoID, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute GetUserTopLevelComments query: %w", err)
+	}
+	defer rows.Close()
+
+	var userComments []schemas.CommentResponse
+	for rows.Next() {
+		var c schemas.CommentResponse
+		var pID *string
+
+		err := rows.Scan(
+			&c.ID, &pID, &c.Text, &c.ReplyCounts, &c.CreatedAt,
+			&c.Author.UserID, &c.Author.Username,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan user comment row: %w", err)
+		}
+
+		c.ParentID = pID
+		userComments = append(userComments, c)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows iteration error in GetUserTopLevelComments: %w", err)
+	}
+
+	return userComments, nil
 }

@@ -82,8 +82,8 @@ def process_video_from_s3(self, upload_id: str, s3_key: str):
             def upload_folder(local_dir, s3_prefix):
                 for root, _, files in os.walk(local_dir):
                     for fname in files:
-                        local_path = os.path.join(root, fname)
-                        rel_path   = os.path.relpath(local_path, local_dir)
+                        local_path = os.path.join(root, fname) # full path including the file...(.ts and .m3u8) 
+                        rel_path   = os.path.relpath(local_path, local_dir) # .ts and .m3u8 
                         s3_key     = f"videos/{upload_id}/{s3_prefix}/{rel_path}"
                         content_type = guess_type(fname)[0] or "application/octet-stream"
                         s3.upload_file(

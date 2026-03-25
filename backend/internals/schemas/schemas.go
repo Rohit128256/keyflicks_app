@@ -42,3 +42,31 @@ type VideoInDb struct {
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
 }
+
+type GetlikeState struct {
+	VideoLikes    int64 `json:"videoLikes"`
+	CurrUserLiked bool  `json:"currUserLiked"`
+}
+
+type VideoComment struct {
+	CommentText string `json:"text"`
+}
+
+type CommentAuthor struct {
+	UserID   string `json:"userId"`
+	Username string `json:"username"`
+}
+
+type CommentResponse struct {
+	ID          string        `json:"id"`
+	ParentID    *string       `json:"parentId"` // Pointer so it can serialize to null
+	Author      CommentAuthor `json:"author"`
+	Text        string        `json:"text"`
+	ReplyCounts int64         `json:"replyCounts"`
+	CreatedAt   time.Time     `json:"createdAt"`
+}
+
+type PaginatedComments struct {
+	Comments   []CommentResponse `json:"comments"`
+	NextCursor *time.Time        `json:"nextCursor"` // Pointer for null if no more pages
+}

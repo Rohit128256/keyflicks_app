@@ -6,14 +6,43 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupStreamingRoutes(router *gin.Engine, streamHandler *handlers.StreamHandler) {
-	streamRoutes := router.Group("/api")
+func SetupStreamingRoutes(
+	router *gin.Engine,
+	streamHandler *handlers.StreamHandler,
+	authHandler *handlers.AuthHandler,
+	eventHandler *handlers.EventHandler,
+	authMiddleware gin.HandlerFunc,
+) {
+	api := router.Group("/api")
+
 	{
-		streamRoutes.POST("/generate-upload-url/:filename", streamHandler.Generate_upload_url)
-		streamRoutes.GET("/stream-status/:upload_id", streamHandler.Get_status)
-		streamRoutes.POST("/s3-webhook", streamHandler.Handle_s3_event)
-		streamRoutes.GET("/playlist/:video_id/:resolution_path", streamHandler.Sign_segments)
-		streamRoutes.GET("/master/:video_id", streamHandler.Modified_master)
-		streamRoutes.GET("/status/:upload_id", streamHandler.Stream_status)
+		// webhook handler
+		api.POST("/s3-webhook", streamHandler.Handle_s3_event)
+
+		// public auth apis
+		api.POST("/register", authHandler.UserRegister)
+		api.POST("/login", authHandler.UserLogin)
+
+		//protected by cookie
+		api.GET("/refresh-token", authHandler.GetNewAccessToken)
+
+		protected := api.Group("")
+		protected.Use(authMiddleware)
+
+		{
+
+			// Streaming & Video Management
+			protected.POST("/generate-upload-url/:filename", streamHandler.Generate_upload_url)
+			protected.GET("/stream-status/:upload_id", streamHandler.Stream_status)
+			protected.GET("/playlist/:video_id/:resolution_path", streamHandler.Sign_segments)
+			protected.GET("/master/:video_id", streamHandler.Modified_master)
+			protected.GET("/status/:upload_id", streamHandler.Get_status)
+
+			// Interactions (Likes & Comments)
+			protected.POST("/like", eventHandler.ToggleLike)
+			protected.GET("/likes", eventHandler.Getlikes)
+			protected.POST("/comment", eventHandler.PostComment)
+			protected.GET("/comments", eventHandler.GetComments)
+		}
 	}
 }

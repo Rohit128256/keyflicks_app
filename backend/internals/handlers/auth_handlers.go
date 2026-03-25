@@ -234,27 +234,34 @@ func (h *AuthHandler) UserLogin(c *gin.Context) {
 
 // accesstoken token handler
 func (h *AuthHandler) GetNewAccessToken(c *gin.Context) {
-	// basic auth step
-	user, exists := c.Get("currentUser")
-
-	if !exists {
-		c.AbortWithStatus(http.StatusUnauthorized)
+	refreshToken, err := c.Cookie("refresh_token")
+	if err != nil || refreshToken == "" {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Refresh token is missing or expired"})
 		return
 	}
 
-	currUser := user.(*schemas.UserInDB)
-
-	token, err := h.jwt.Encode(currUser.Username)
-
+	// validation
+	payload, err := h.jwt.Decode(refreshToken)
 	if err != nil {
-		log.Printf("Failed to generate access token for user %s: %v", currUser.Username, err)
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired refresh token"})
+		return
+	}
+
+	username, ok := payload["sub"].(string)
+	if !ok {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token payload"})
+		return
+	}
+
+	newAccessToken, err := h.jwt.Encode(username)
+	if err != nil {
+		log.Printf("Failed to generate access token for user %s: %v", username, err)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Could not generate new access token."})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"access_token": token,
+	c.JSON(http.StatusOK, gin.H{
+		"access_token": newAccessToken,
 		"token_type":   "Bearer",
 	})
-
 }

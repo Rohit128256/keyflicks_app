@@ -3,12 +3,18 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
+	"keyflicks_app/cmd/services"
+	"keyflicks_app/internals/auth"
 	"keyflicks_app/internals/cache"
 	"keyflicks_app/internals/celery"
+	database "keyflicks_app/internals/db"
 	"keyflicks_app/internals/handlers"
+	"keyflicks_app/internals/middlewares"
 	"keyflicks_app/internals/routes"
 	"keyflicks_app/internals/s3_store"
 	"log"
+	"net/url"
 	"os"
 	"time"
 
@@ -20,6 +26,7 @@ import (
 	"github.com/aws/smithy-go"
 	"github.com/gin-gonic/gin"
 	redigo "github.com/gomodule/redigo/redis"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/redis/go-redis/v9"
 )
@@ -88,21 +95,36 @@ func main() {
 		log.Println("no .env file found (continuing)")
 	}
 
+	// loading all the .env variables
 	minio_endpoint := os.Getenv("MINIO_ENDPOINT")
 	minio_root_user := os.Getenv("MINIO_ROOT_USER")
 	minio_root_pass := os.Getenv("MINIO_ROOT_PASSWORD")
-	log.Printf("DEBUG: MINIO_ENDPOINT value is: '%s'\n", minio_endpoint) // <-- Add this line
-
 	redis_url := os.Getenv("REDIS_URL")
-
+	jwt_secret := os.Getenv("JWT_SECRET")
+	dbUser := os.Getenv("POSTGRES_USER")
+	dbPass := os.Getenv("POSTGRES_PASSWORD")
+	dbHost := os.Getenv("POSTGRES_HOST")
+	dbName := os.Getenv("POSTGRES_DB")
 	s3_streaming_bucket := os.Getenv("STREAMING_BUCKET")
 	s3_pending_bucket := os.Getenv("PENDING_BUCKET")
-
+	s3_profile_bucket := os.Getenv("PROFILE_BUCKET")
 	uri_secret_token := os.Getenv("URI_SIGNATURE_SECRET")
+
+	log.Printf("DEBUG: MINIO_ENDPOINT value is: '%s'\n", minio_endpoint) // just for basic debugging
+
+	// postgres database configuration
+	dbCredentials := url.UserPassword(dbUser, dbPass)
+	db_url := fmt.Sprintf("postgres://%s@%s/%s", dbCredentials.String(), dbHost, dbName)
+	dbPool, err := pgxpool.New(context.Background(), db_url)
+	if err != nil {
+		log.Fatalf("Unable to connect to database: %v", err)
+	}
+	defer dbPool.Close()
+
+	db_store := database.NewDbStore(dbPool)
 
 	// celery configuration
 	redis_pool := createRedisPool("redis://localhost:6379")
-
 	celery_ins, err := celery.NewCelery(redis_pool)
 	if err != nil {
 		log.Printf("error occured while configuring celery : %v", err)
@@ -115,10 +137,9 @@ func main() {
 
 	redis_ins := cache.NewRdisDB(redis_client)
 
-	// for s3 configuration
+	// S3 Storage configuration (minio here)
 
-	// 2. Load the base configuration (credentials, region, etc.).
-	//    We NO LONGER pass the resolver here.
+	// loading the base configuration (credentials, region, etc.).
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
 		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(minio_root_user, minio_root_pass, "")),
 		config.WithRegion("us-east-1"), // A dummy region is still needed
@@ -127,8 +148,7 @@ func main() {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
-	// 3. Create the S3 client, injecting the new resolver here.
-	//    The custom resolver is passed as an option directly to s3.NewFromConfig.
+	// Create the S3 client, injecting the new resolver here.
 	s3_client := s3.NewFromConfig(cfg, func(o *s3.Options) {
 		o.BaseEndpoint = aws.String(minio_endpoint)
 		o.UsePathStyle = true
@@ -140,12 +160,36 @@ func main() {
 		log.Fatalf("ensureBuckets error: %v", err)
 	}
 
-	//now configuring handler
-	handler_ins := handlers.NewStreamHandler(s3_ins, redis_ins, celery_ins, uri_secret_token, s3_pending_bucket, s3_streaming_bucket, 1800)
+	// initializing jwt_auth
+	jwt_auth := auth.NewJwt(jwt_secret)
 
+	// now initializing different handlers handler
+	stream_handler := handlers.NewStreamHandler(s3_ins, redis_ins, celery_ins, uri_secret_token, s3_pending_bucket, s3_streaming_bucket, 1800)
+	auth_handler := handlers.NewAuthHandler(db_store, jwt_auth, redis_ins, s3_profile_bucket)
+	event_handler := handlers.NewEventHandler(db_store, redis_ins)
+
+	// now inititalize the moddleware
+	auth_middleware := middlewares.AuthMiddleware(db_store, redis_ins, jwt_auth)
+
+	// now defining and starting the background services
+
+	bgCtx := context.Background()
+
+	dbWriterService := services.NewDBWriter(dbPool, redis_client, 3)
+	commentsWriterService := services.NewCommentsWriter(dbPool, redis_ins, 3)
+	likeSyncerService := services.NewLikeSyncer(dbPool, redis_ins)
+	counterSyncerService := services.NewCounterSyncer(dbPool, redis_ins)
+
+	// starting the background services
+	go dbWriterService.Start(bgCtx)
+	go commentsWriterService.Start(bgCtx)
+	go likeSyncerService.Start(bgCtx)
+	go counterSyncerService.Start(bgCtx, 2)
+
+	// settings up the routes
 	router := gin.Default()
 
-	routes.SetupStreamingRoutes(router, handler_ins)
+	routes.SetupStreamingRoutes(router, stream_handler, auth_handler, event_handler, auth_middleware)
 
 	log.Println("Starting server on :8000")
 	if err := router.Run(":8000"); err != nil {

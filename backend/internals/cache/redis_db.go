@@ -4,6 +4,11 @@ import (
 	"context"
 	"time"
 
+	"encoding/json"
+	"fmt"
+	"keyflicks_app/internals/schemas"
+	"log"
+
 	"github.com/redis/go-redis/v9"
 )
 
@@ -78,4 +83,51 @@ func (r *RedisDB) Expire(ctx context.Context, key string, exp_time int) error {
 // Returns a Redis Pipeliner to batch commands and reduce network trips
 func (r *RedisDB) Pipeline() redis.Pipeliner {
 	return r.Client.Pipeline()
+}
+
+// caching comments
+func (r *RedisDB) SetFirstPageComments(videoID string, comments []schemas.CommentResponse) {
+	// Background cache update (decoupled from request context)
+	go func(vID string, data []schemas.CommentResponse) {
+		bgCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		key := fmt.Sprintf("video:%s:comments:first_page", vID)
+
+		b, err := json.Marshal(data)
+		if err != nil {
+			log.Printf("Background cache update failed for video %s comments: %v", vID, err)
+			return
+		}
+
+		if r != nil {
+			// Using your custom Set method (300 seconds = 5 mins)
+			err = r.Set(bgCtx, key, string(b), 300)
+			if err != nil {
+				log.Printf("Failed to set redis cache for video %s comments: %v", vID, err)
+			}
+		}
+	}(videoID, comments)
+}
+
+// get comments if exists
+func (r *RedisDB) GetFirstPageComments(ctx context.Context, videoID string) ([]schemas.CommentResponse, error) {
+	key := fmt.Sprintf("video:%s:comments:first_page", videoID)
+
+	data, err := r.Client.Get(ctx, key).Bytes()
+	if err != nil {
+		if err == redis.Nil {
+			// Cache miss - this is perfectly normal, return empty and nil error
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to get cache for video %s: %w", videoID, err)
+	}
+
+	// Unmarshal the JSON bytes back into our Go slice
+	var comments []schemas.CommentResponse
+	if err := json.Unmarshal(data, &comments); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal cached comments: %w", err)
+	}
+
+	return comments, nil
 }

@@ -242,7 +242,7 @@ func (h *StreamHandler) Handle_s3_event(c *gin.Context) {
 }
 
 // stream status sse handler (ready to use with jwt middleware)
-func (h *StreamHandler) Get_status(c *gin.Context) {
+func (h *StreamHandler) Stream_status(c *gin.Context) {
 
 	upload_id, err := c.Cookie("Transcode_status")
 
@@ -479,7 +479,7 @@ func (h *StreamHandler) Modified_master(c *gin.Context) {
 }
 
 // handler function to see the status of video using video id (can be used with auth middleware needs to be modified according to database (currently relies on s3))
-func (h *StreamHandler) Stream_status(c *gin.Context) {
+func (h *StreamHandler) Get_status(c *gin.Context) {
 	uploadID := c.Param("upload_id")
 	cacheKey := fmt.Sprintf("upload_status:%s", uploadID)
 
