@@ -36,7 +36,6 @@ func (h *EventHandler) ToggleLike(c *gin.Context) {
 	}
 
 	currUser := user.(*schemas.UserInDB)
-
 	curruserId := currUser.ID.String()
 
 	// defining the keys for counter and sets
@@ -44,6 +43,28 @@ func (h *EventHandler) ToggleLike(c *gin.Context) {
 	dirtyStateKey := "sync:dirty_interactions"
 	dirtyLikeKey := "sync:dirty_video_counts"
 	counterKey := fmt.Sprintf("vid:%s:stats", video_id)
+
+	// warm the cache counter
+	if h.redis.Client.Exists(c, counterKey).Val() == 0 {
+		// Cache is cold. Fetch the true base value from the database.
+		videoInfo, err := h.db.GetVideoDetails(c, video_id)
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "This service is not allowed currently!"})
+			return
+		}
+
+		h.redis.Client.HSetNX(c, counterKey, "likes", videoInfo.Likes)
+
+	}
+
+	currentState := h.redis.Client.Get(c, stateKey).Val()
+
+	if actionType == "like" && currentState == "like" {
+		// user already liked it !
+		c.Status(http.StatusNoContent)
+		return
+	}
 
 	incrCount := 0
 	if actionType == "like" {
@@ -62,41 +83,16 @@ func (h *EventHandler) ToggleLike(c *gin.Context) {
 		pipe.SAdd(c, dirtyStateKey, fmt.Sprintf("%s:%s", video_id, curruserId))
 	}
 
-	// Queue the increment and capture the command reference to read the result later
+	pipe.HIncrBy(c, counterKey, "likes", int64(incrCount))
+	pipe.Expire(c, counterKey, 30*time.Minute)
+
+	// We can safely add to the dirty set now because the base count is guaranteed to be correct
 	pipe.SAdd(c, dirtyLikeKey, video_id)
-	incrCmd := pipe.HIncrBy(c, counterKey, "likes", int64(incrCount))
 
-	// Extending Expiration time on each interaction like a sliding window to avoid likes count writing failure
-	expiration := time.Duration(30) * time.Minute
-	pipe.Expire(c, counterKey, expiration)
-
-	// Fire all 3 commands in ONE single network trip!
 	_, err := pipe.Exec(c)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Redis pipeline failed"})
 		return
-	}
-
-	// 4. Get the result of the increment operation from the pipeline
-	newCount := incrCmd.Val()
-
-	// preventing race condition by increamenting the counter blindly before checking the db
-	if newCount == 1 || newCount == -1 {
-		videoInfo, err := h.db.GetVideoDetails(c, video_id)
-		if err != nil {
-			h.redis.Remove(c, counterKey)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get likes from db to update the like counter"})
-			return
-		}
-
-		dbLikes := videoInfo.Likes
-
-		_, err = h.redis.IncrementHashField(c, counterKey, "likes", dbLikes)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update the counter"})
-			return
-		}
-
 	}
 
 	c.Status(http.StatusNoContent)

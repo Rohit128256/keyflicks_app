@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sort"
 	"time"
 
 	"keyflicks_app/internals/cache"
@@ -138,9 +139,17 @@ func (s *CommentsWriter) processBatch(ctx context.Context, stream, group, worker
 		var updateParentIDs []string
 		var newReplies []int
 
-		for pID, count := range replyCountsMap {
+		// Extract all the parent IDs into a slice
+		for pID := range replyCountsMap {
 			updateParentIDs = append(updateParentIDs, pID)
-			newReplies = append(newReplies, count)
+		}
+
+		//  Sorting the IDs lexicographically to prevent deadlocks
+		sort.Strings(updateParentIDs)
+
+		// build the counts array using the exact same sorted order
+		for _, pID := range updateParentIDs {
+			newReplies = append(newReplies, replyCountsMap[pID])
 		}
 
 		updateQuery := `

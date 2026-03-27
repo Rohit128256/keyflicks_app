@@ -164,7 +164,7 @@ func main() {
 	jwt_auth := auth.NewJwt(jwt_secret)
 
 	// now initializing different handlers handler
-	stream_handler := handlers.NewStreamHandler(s3_ins, redis_ins, celery_ins, uri_secret_token, s3_pending_bucket, s3_streaming_bucket, 1800)
+	stream_handler := handlers.NewStreamHandler(s3_ins, db_store, redis_ins, celery_ins, uri_secret_token, s3_pending_bucket, s3_streaming_bucket, 1800)
 	auth_handler := handlers.NewAuthHandler(db_store, jwt_auth, redis_ins, s3_profile_bucket)
 	event_handler := handlers.NewEventHandler(db_store, redis_ins)
 

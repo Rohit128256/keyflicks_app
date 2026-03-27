@@ -41,6 +41,7 @@ CREATE TABLE videos (
 
 -- Create an index on user_id to quickly fetch all videos for a specific user
 CREATE INDEX idx_videos_user_id ON videos(user_id);
+CREATE INDEX idx_videos_pagination ON videos(user_id, created_at DESC, id);
 
 
 CREATE TABLE playlists (

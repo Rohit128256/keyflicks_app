@@ -283,3 +283,76 @@ func (s *DbStore) GetUserTopLevelComments(ctx context.Context, videoID string, u
 
 	return userComments, nil
 }
+
+// GetUserUploadedVideos fetches a paginated list of videos uploaded by a specific user.
+func (s *DbStore) GetUserUploadedVideos(ctx context.Context, userID string, cursorTime *time.Time, cursorID *string, limit int) ([]schemas.VideoInDb, error) {
+	var query strings.Builder
+
+	// Pre-allocate slice capacity to reduce memory re-allocations
+	args := make([]any, 0, 4)
+
+	// base Query
+	query.WriteString(`
+		SELECT id, title, description, like_count, comment_count, created_at, updated_at
+		FROM videos
+		WHERE user_id = $1
+	`)
+	args = append(args, userID)
+	argID := 2
+
+	// dynamic keyset pagination (Cursor)
+	// Using tuple comparison guarantees strict ordering without in-memory sorting
+	if cursorTime != nil && cursorID != nil {
+		fmt.Fprintf(&query, ` AND (created_at, id) < ($%d, $%d)`, argID, argID+1)
+		args = append(args, *cursorTime, *cursorID)
+		argID += 2
+	}
+
+	// Sort and Limit
+	// Order must match the tuple comparison direction to utilize the index efficiently
+	fmt.Fprintf(&query, ` ORDER BY created_at DESC, id DESC LIMIT $%d`, argID)
+	args = append(args, limit)
+
+	rows, err := s.db.Query(ctx, query.String(), args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute GetUserUploadedVideos query: %w", err)
+	}
+	defer rows.Close()
+
+	videos := make([]schemas.VideoInDb, 0, limit)
+
+	for rows.Next() {
+		var v schemas.VideoInDb
+
+		err := rows.Scan(
+			&v.ID, &v.Title, &v.Description, &v.Likes, &v.Comments, &v.CreatedAt, &v.UpdatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan user video row: %w", err)
+		}
+
+		videos = append(videos, v)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows iteration error in GetUserUploadedVideos: %w", err)
+	}
+
+	return videos, nil
+}
+
+func (s *DbStore) DeleteVideoByOwner(ctx context.Context, videoID string, userID string) error {
+	query := `DELETE FROM videos WHERE id = $1 AND user_id = $2`
+
+	tag, err := s.db.Exec(ctx, query, videoID, userID)
+	if err != nil {
+		return fmt.Errorf("failed to execute delete query: %w", err)
+	}
+
+	// If no rows were affected, the video either doesn't exist or belongs to someone else
+	if tag.RowsAffected() == 0 {
+		return errors.New("video not found or unauthorized to delete")
+	}
+
+	return nil
+}

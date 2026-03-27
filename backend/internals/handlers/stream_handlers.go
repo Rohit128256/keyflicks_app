@@ -8,6 +8,7 @@ import (
 	"io"
 	"keyflicks_app/internals/cache"
 	"keyflicks_app/internals/celery"
+	database "keyflicks_app/internals/db"
 	"keyflicks_app/internals/s3_store"
 	"keyflicks_app/internals/schemas"
 	"keyflicks_app/internals/signature"
@@ -16,8 +17,6 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
-	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -30,17 +29,19 @@ type StreamHandler struct {
 	S3               *s3_store.S3Store
 	redis            *cache.RedisDB
 	celery           *celery.Celery
+	db               *database.DbStore
 	uri_secret       string
 	pending_bucket   string
 	streaming_bucket string
 	TTL              int
 }
 
-func NewStreamHandler(s3 *s3_store.S3Store, rds *cache.RedisDB, cel *celery.Celery, uri_sec string, pend_bucket string, stream_bucket string, exp int) *StreamHandler {
+func NewStreamHandler(s3 *s3_store.S3Store, db *database.DbStore, rds *cache.RedisDB, cel *celery.Celery, uri_sec string, pend_bucket string, stream_bucket string, exp int) *StreamHandler {
 	return &StreamHandler{
 		S3:               s3,
 		redis:            rds,
 		celery:           cel,
+		db:               db,
 		uri_secret:       uri_sec,
 		pending_bucket:   pend_bucket,
 		streaming_bucket: stream_bucket,
@@ -483,18 +484,10 @@ func (h *StreamHandler) Get_status(c *gin.Context) {
 	uploadID := c.Param("upload_id")
 	cacheKey := fmt.Sprintf("upload_status:%s", uploadID)
 
-	// The struct for both the cache and the final API response.
-	// Using `int` for resolutions to allow for proper sorting.
-	type responseData struct {
-		UploadID             string `json:"upload_id"`
-		Status               string `json:"status"`
-		AvailableResolutions []int  `json:"available_resolutions"`
-	}
-
-	// 1. Try to fetch from the cache first.
+	// fetch from the cache first.
 	if h.redis != nil {
 		if cachedStr, err := h.redis.Get(c.Request.Context(), cacheKey); err == nil && cachedStr != "" {
-			var data responseData
+			var data schemas.ResponseVideoData
 			if err := json.Unmarshal([]byte(cachedStr), &data); err == nil {
 				log.Printf("Cache HIT for upload_id: %s", uploadID)
 				c.JSON(http.StatusOK, data)
@@ -505,76 +498,223 @@ func (h *StreamHandler) Get_status(c *gin.Context) {
 
 	log.Printf("Cache MISS for upload_id: %s", uploadID)
 
-	// 2. Cache MISS: Query S3 for the list of objects.
-	// The trailing slash is important for listing objects within the "folder".
-	prefix := fmt.Sprintf("videos/%s/", uploadID)
+	// Check Database (Source of truth for "ready")
+	videoInfo, err := h.db.GetVideoDetails(c.Request.Context(), uploadID)
 
-	objects, err := h.S3.ListObjects(c.Request.Context(), h.streaming_bucket, prefix)
+	// If err is nil and we got video info, it's fully ready!
+	if err == nil && videoInfo != nil {
+		finalResponse := schemas.ResponseVideoData{
+			UploadID:    uploadID,
+			Status:      "ready",
+			Title:       videoInfo.Title,
+			Description: videoInfo.Description,
+			Likes:       videoInfo.Likes, // Sourced from your existing struct
+			CreatedAt:   videoInfo.CreatedAt.Format(time.RFC3339),
+		}
+
+		// background Cache Update (Only if READY)
+		go func() {
+			jsonData, _ := json.Marshal(finalResponse)
+			bgCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			if err := h.redis.Set(bgCtx, cacheKey, string(jsonData), h.TTL); err != nil {
+				log.Printf("Background cache update failed: %v", err)
+			}
+		}()
+
+		c.JSON(http.StatusOK, finalResponse)
+		return
+	}
+
+	// 3. Check Redis for "processing" state
+	infoKey := fmt.Sprintf("VideoInfoOf:%s", uploadID)
+	redisExists, err := h.redis.Client.Exists(c.Request.Context(), infoKey).Result()
+
+	if err == nil && redisExists > 0 {
+		// Only returning upload_id and status here
+		c.JSON(http.StatusOK, schemas.ResponseVideoData{
+			UploadID: uploadID,
+			Status:   "processing",
+		})
+		return
+	}
+
+	// 4. Neither ready nor processing
+	c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Video not found or processing failed"})
+}
+
+func (h *StreamHandler) Get_uploaded_videos(c *gin.Context) {
+	// 1. Extract the current logged-in user from the auth middleware
+	user, exists := c.Get("currentUser")
+	if !exists {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	currUser := user.(*schemas.UserInDB)
+	userID := currUser.ID.String()
+
+	// 2. Parse Query Parameters (Cursors)
+	cursorTimeStr := c.Query("cursor_time")
+	cursorIDStr := c.Query("cursor_id")
+	limit := 20 // Hardcoded limit as requested
+
+	var cursorTime *time.Time
+	var cursorID *string
+
+	if cursorTimeStr != "" && cursorIDStr != "" {
+		parsedTime, err := time.Parse(time.RFC3339, cursorTimeStr)
+		if err == nil {
+			cursorTime = &parsedTime
+			cursorID = &cursorIDStr
+		}
+	}
+
+	// formulate Cache Key
+	// If cursorID is empty, it means they are requesting the first page.
+	cacheCursor := "first_page"
+	if cursorID != nil {
+		cacheCursor = *cursorID
+	}
+	cacheKey := fmt.Sprintf("user_videos:%s:%s", userID, cacheCursor)
+
+	// Try cache search
+	if h.redis != nil {
+		if cachedStr, err := h.redis.Get(c.Request.Context(), cacheKey); err == nil && cachedStr != "" {
+			// Serve raw JSON bytes directly from Redis to save unmarshaling CPU overhead
+			c.Data(http.StatusOK, "application/json", []byte(cachedStr))
+			return
+		}
+	}
+
+	// Cache Miss
+	videos, err := h.db.GetUserUploadedVideos(c.Request.Context(), userID, cursorTime, cursorID, limit+1)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to query upload status"})
+		log.Printf("Failed to fetch user videos: %v", err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch videos"})
 		return
 	}
 
-	if len(objects) == 0 {
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Upload ID not found"})
+	// 6. Determine Pagination State
+	var nextCursorTime string
+	var nextCursorID string
+	hasMore := false
+
+	if len(videos) > limit {
+		hasMore = true
+
+		// The next cursor relies on the 21st item (index 20)
+		nextVideo := videos[limit]
+		nextCursorTime = nextVideo.CreatedAt.Format(time.RFC3339)
+		nextCursorID = nextVideo.ID
+
+		// Trim the slice to only return the requested 20 items
+		videos = videos[:limit]
+	}
+
+	// 7. Format Final Response Map
+	response := gin.H{
+		"videos":           videos,
+		"next_cursor_time": nextCursorTime,
+		"next_cursor_id":   nextCursorID,
+		"has_more":         hasMore,
+	}
+
+	// 8. Background Cache Update (Non-blocking)
+	go func(responseData gin.H, key string) {
+		bgCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		b, err := json.Marshal(responseData)
+		if err != nil {
+			log.Printf("Failed to marshal user videos for cache: %v", err)
+			return
+		}
+
+		if h.redis != nil {
+			// Caching profile pages for 5 minutes
+			_ = h.redis.Set(bgCtx, key, string(b), 300)
+		}
+	}(response, cacheKey)
+
+	// 9. Send Response
+	c.JSON(http.StatusOK, response)
+}
+
+// Delete_video handles deleting a video from the DB, S3 streaming bucket, and clearing related caches
+func (h *StreamHandler) Delete_video(c *gin.Context) {
+	videoID := c.Param("video_id")
+	if videoID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "video_id is required"})
 		return
 	}
 
-	// 3. Determine status based on the files found.
-	// A map is the Go equivalent of Python's set for efficient lookups.
-	keys := make(map[string]bool)
-	for _, obj := range objects {
-		// Equivalent to Python's .removeprefix()
-		keys[strings.TrimPrefix(*obj.Key, prefix)] = true
+	// 1. Get current logged-in user
+	user, exists := c.Get("currentUser")
+	if !exists {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	currUser := user.(*schemas.UserInDB)
+	userID := currUser.ID.String()
+
+	// 2. Delete from Database securely (Ensures ownership)
+	err := h.db.DeleteVideoByOwner(c.Request.Context(), videoID, userID)
+	if err != nil {
+		if err.Error() == "video not found or unauthorized to delete" {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Video not found or you do not have permission to delete it"})
+			return
+		}
+		log.Printf("Database error deleting video %s: %v", videoID, err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete video from database"})
+		return
 	}
 
-	status := "processing"
-	resolutions := []int{}
+	// deleting HLS files from S3 Streaming Bucket using the prefix "videos/{video_id}/"
+	s3Prefix := fmt.Sprintf("videos/%s/", videoID)
 
-	if keys["master.m3u8"] {
-		status = "ready"
-		for k := range keys {
-			// e.g., "360p/playlist.m3u8"
-			if strings.HasSuffix(k, "playlist.m3u8") && strings.Contains(k, "/") {
-				resStr := strings.Split(k, "/")[0] // "360p"
-				if strings.HasSuffix(resStr, "p") {
-					// Convert "360p" -> "360" -> 360 (int)
-					if resInt, err := strconv.Atoi(strings.TrimSuffix(resStr, "p")); err == nil {
-						resolutions = append(resolutions, resInt)
-					}
+	go func(vID, uID, prefix string) {
+		bgCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		// delete obj
+		if err := h.S3.DeleteObjectsByPrefix(bgCtx, h.streaming_bucket, prefix); err != nil {
+			log.Printf("Warning: Failed to delete S3 objects for prefix %s: %v", prefix, err)
+			// We log it but don't panic, as the DB record is already gone (Soft-orphaned files)
+		}
+
+		// --- Clean Redis Caches ---
+		if h.redis != nil {
+			// all paginated cache keys for this specific user
+			pattern := fmt.Sprintf("user_videos:%s:*", uID)
+			userVideoKeys, err := h.redis.Client.Keys(bgCtx, pattern).Result()
+			if err != nil && err != redis.Nil {
+				log.Printf("Warning: Failed to scan keys for pattern %s: %v", pattern, err)
+			}
+
+			// the exact video-specific keys
+			keysToDelete := []string{
+				fmt.Sprintf("master:%s", vID),        // Invalidate master playlist
+				fmt.Sprintf("VideoInfoOf:%s", vID),   // Invalidate processing cache
+				fmt.Sprintf("upload_status:%s", vID), // Invalidate status cache
+			}
+
+			// combine all the keys
+			keysToDelete = append(keysToDelete, userVideoKeys...)
+
+			// remove everything in one batch
+			if len(keysToDelete) > 0 {
+				err := h.redis.Remove(bgCtx, keysToDelete...)
+				if err != nil {
+					log.Printf("Warning: Failed to invalidate cache for deleted video %s: %v", vID, err)
 				}
 			}
 		}
-	}
+	}(videoID, userID, s3Prefix)
 
-	// 4. Construct the final response.
-	sort.Ints(resolutions) // Equivalent to Python's sorted()
-	finalResponse := responseData{
-		UploadID:             uploadID,
-		Status:               status,
-		AvailableResolutions: resolutions,
-	}
-
-	// 5. Update the cache in the background.
-	// This is the Go equivalent of background_tasks.add_task.
-	go func() {
-		jsonData, err := json.Marshal(finalResponse)
-		if err != nil {
-			log.Printf("Background cache update failed (marshal): %v", err)
-			return
-		}
-		// A background task should have its own context that isn't tied to the request.
-		bgCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-
-		if err := h.redis.Set(bgCtx, cacheKey, string(jsonData), h.TTL); err != nil {
-			log.Printf("Background cache update failed (set): %v", err)
-		} else {
-			log.Printf("Background cache update SUCCESS for upload_id: %s", uploadID)
-		}
-	}()
-
-	// 6. Return the final response to the client.
-	c.JSON(http.StatusOK, finalResponse)
-
+	// 4. Return immediate success to the client
+	c.JSON(http.StatusOK, gin.H{
+		"message":  "Video deleted successfully",
+		"video_id": videoID,
+	})
 }

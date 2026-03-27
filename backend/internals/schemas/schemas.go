@@ -70,3 +70,12 @@ type PaginatedComments struct {
 	Comments   []CommentResponse `json:"comments"`
 	NextCursor *time.Time        `json:"nextCursor"` // Pointer for null if no more pages
 }
+
+type ResponseVideoData struct {
+	UploadID    string `json:"upload_id"`
+	Status      string `json:"status"`
+	Title       string `json:"title,omitempty"`
+	Description string `json:"description,omitempty"`
+	Likes       int64  `json:"like_counts,omitempty"` // Changed to match your schema needs
+	CreatedAt   string `json:"created_at,omitempty"`
+}

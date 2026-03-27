@@ -66,8 +66,8 @@ func (r *RedisDB) IncrementHashField(ctx context.Context, key string, field stri
 }
 
 // remove anything using it's key from redis
-func (r *RedisDB) Remove(ctx context.Context, key string) error {
-	return r.Client.Del(ctx, key).Err()
+func (r *RedisDB) Remove(ctx context.Context, key ...string) error {
+	return r.Client.Del(ctx, key...).Err()
 }
 
 // set expiry time for anything using it's key
