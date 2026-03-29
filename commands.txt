@@ -4,5 +4,8 @@ python -m celery -A app.celery_app:celery worker --pool=solo --loglevel=info --q
 #command to run redis container (using docker)
 docker run -d --name redis -p 6379:6379 redis
 
-#command to run minio 
+#command to run minio
+set MINIO_ROOT_USER=admin
+set MINIO_ROOT_PASSWORD=admin12345
+
 minio.exe server --desitnation path 

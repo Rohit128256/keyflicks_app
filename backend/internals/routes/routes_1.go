@@ -38,6 +38,10 @@ func SetupStreamingRoutes(
 			protected.GET("/master/:video_id", streamHandler.Modified_master)
 			protected.GET("/status/:upload_id", streamHandler.Get_status)
 
+			protected.GET("/my-videos", streamHandler.Get_uploaded_videos)
+			protected.GET("/get-videos", streamHandler.Get_uploaded_videos_by_user)
+			protected.DELETE("/video/:video_id", streamHandler.Delete_video)
+
 			// Interactions (Likes & Comments)
 			protected.POST("/like", eventHandler.ToggleLike)
 			protected.GET("/likes", eventHandler.Getlikes)

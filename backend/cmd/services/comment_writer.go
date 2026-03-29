@@ -48,6 +48,9 @@ func (s *CommentsWriter) Start(ctx context.Context) {
 }
 
 func (s *CommentsWriter) worker(ctx context.Context, stream, group, workerName string) {
+
+	log.Printf("comment writer - %s has been started", workerName)
+
 	for {
 		select {
 		case <-ctx.Done():

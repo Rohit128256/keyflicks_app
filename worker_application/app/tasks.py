@@ -20,7 +20,7 @@ def process_video_from_s3(self, upload_id: str, s3_key: str):
     from S3 into ffmpeg for transcoding.
     """
 
-    channel = f"job_status_{upload_id}"
+    stream_name = "Event.Transcode.Status"
 
     with tempfile.TemporaryDirectory() as work_root:
         try:
@@ -82,8 +82,8 @@ def process_video_from_s3(self, upload_id: str, s3_key: str):
             def upload_folder(local_dir, s3_prefix):
                 for root, _, files in os.walk(local_dir):
                     for fname in files:
-                        local_path = os.path.join(root, fname) # full path including the file...(.ts and .m3u8) 
-                        rel_path   = os.path.relpath(local_path, local_dir) # .ts and .m3u8 
+                        local_path = os.path.join(root, fname)
+                        rel_path   = os.path.relpath(local_path, local_dir)
                         s3_key     = f"videos/{upload_id}/{s3_prefix}/{rel_path}"
                         content_type = guess_type(fname)[0] or "application/octet-stream"
                         s3.upload_file(
@@ -126,14 +126,38 @@ def process_video_from_s3(self, upload_id: str, s3_key: str):
             )
             print(f"Worker uploaded master playlist for {upload_id} to s3://{STREAMING_BUCKET}/videos/{upload_id}/master.m3u8")
 
-            redis_client_sync.publish(channel, "ready")
+            event_data = {
+                "upload_id": upload_id,  
+                "status": "ready"
+            }
+
+            redis_client_sync.xadd(
+                stream_name,
+                event_data,
+                maxlen = 10000,
+                approximate = True,
+                id = "*",
+            )
             
             return {"status": "success", "upload_id": upload_id}
 
         except Exception as e:
             print(f"Error processing {upload_id}: {e}")
             self.update_state(state='FAILURE', meta={'exc': str(e)})
-            redis_client_sync.publish(channel, "failed")
+            
+            event_data = {
+                "upload_id": upload_id,  
+                "status": "failed"
+            }
+
+            redis_client_sync.xadd(
+                stream_name,
+                event_data,
+                maxlen = 10000,
+                approximate = True,
+                id = "*",
+            )
+
             raise
 
         finally:

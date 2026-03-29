@@ -32,6 +32,7 @@ func (s *CounterSyncer) Start(ctx context.Context, numWorkers int) {
 		go func(workerID int) {
 			// A 10-second ticker is perfect for counters.
 			//We don't need real-time DB writes because Redis handles the real-time reads!
+			log.Printf("Like Count Syncer service - %d has started", workerID)
 			ticker := time.NewTicker(20 * time.Second)
 			defer ticker.Stop()
 

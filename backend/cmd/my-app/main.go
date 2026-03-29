@@ -186,6 +186,8 @@ func main() {
 	go likeSyncerService.Start(bgCtx)
 	go counterSyncerService.Start(bgCtx, 2)
 
+	log.Printf("All the Services are running")
+
 	// settings up the routes
 	router := gin.Default()
 
