@@ -356,3 +356,30 @@ func (s *DbStore) DeleteVideoByOwner(ctx context.Context, videoID string, userID
 
 	return nil
 }
+
+func (s *DbStore) UpdateUserDetails(ctx context.Context, userID string, email string, username string, dob time.Time) error {
+	query := `
+		UPDATE users 
+		SET email = $1, username = $2, dob = $3
+		WHERE id = $4
+	`
+
+	_, err := s.db.Exec(ctx, query, email, username, dob, userID)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			// Code 23505 is PostgreSQL's unique_violation error code
+			if pgErr.Code == "23505" {
+				if strings.Contains(pgErr.Message, "email") {
+					return ErrEmailExists
+				}
+				if strings.Contains(pgErr.Message, "username") {
+					return ErrUsernameExists
+				}
+			}
+		}
+		return fmt.Errorf("failed to update user details: %w", err)
+	}
+
+	return nil
+}

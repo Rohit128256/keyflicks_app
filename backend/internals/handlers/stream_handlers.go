@@ -718,3 +718,94 @@ func (h *StreamHandler) Delete_video(c *gin.Context) {
 		"video_id": videoID,
 	})
 }
+
+// get uploaded videos by user_id
+func (h *StreamHandler) Get_uploaded_videos_by_user(c *gin.Context) {
+	userID := c.Query("userID")
+
+	// 2. Parse Query Parameters (Cursors)
+	cursorTimeStr := c.Query("cursor_time")
+	cursorIDStr := c.Query("cursor_id")
+	limit := 20 // Hardcoded limit as requested
+
+	var cursorTime *time.Time
+	var cursorID *string
+
+	if cursorTimeStr != "" && cursorIDStr != "" {
+		parsedTime, err := time.Parse(time.RFC3339, cursorTimeStr)
+		if err == nil {
+			cursorTime = &parsedTime
+			cursorID = &cursorIDStr
+		}
+	}
+
+	// formulate Cache Key
+	// If cursorID is empty, it means they are requesting the first page.
+	cacheCursor := "first_page"
+	if cursorID != nil {
+		cacheCursor = *cursorID
+	}
+	cacheKey := fmt.Sprintf("user_videos:%s:%s", userID, cacheCursor)
+
+	// Try cache search
+	if h.redis != nil {
+		if cachedStr, err := h.redis.Get(c.Request.Context(), cacheKey); err == nil && cachedStr != "" {
+			// Serve raw JSON bytes directly from Redis to save unmarshaling CPU overhead
+			c.Data(http.StatusOK, "application/json", []byte(cachedStr))
+			return
+		}
+	}
+
+	// Cache Miss
+	videos, err := h.db.GetUserUploadedVideos(c.Request.Context(), userID, cursorTime, cursorID, limit+1)
+	if err != nil {
+		log.Printf("Failed to fetch user videos: %v", err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch videos"})
+		return
+	}
+
+	// 6. Determine Pagination State
+	var nextCursorTime string
+	var nextCursorID string
+	hasMore := false
+
+	if len(videos) > limit {
+		hasMore = true
+
+		// The next cursor relies on the 21st item (index 20)
+		nextVideo := videos[limit]
+		nextCursorTime = nextVideo.CreatedAt.Format(time.RFC3339)
+		nextCursorID = nextVideo.ID
+
+		// Trim the slice to only return the requested 20 items
+		videos = videos[:limit]
+	}
+
+	// 7. Format Final Response Map
+	response := gin.H{
+		"videos":           videos,
+		"next_cursor_time": nextCursorTime,
+		"next_cursor_id":   nextCursorID,
+		"has_more":         hasMore,
+	}
+
+	// 8. Background Cache Update (Non-blocking)
+	go func(responseData gin.H, key string) {
+		bgCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		b, err := json.Marshal(responseData)
+		if err != nil {
+			log.Printf("Failed to marshal user videos for cache: %v", err)
+			return
+		}
+
+		if h.redis != nil {
+			// Caching profile pages for 5 minutes
+			_ = h.redis.Set(bgCtx, key, string(b), 300)
+		}
+	}(response, cacheKey)
+
+	// 9. Send Response
+	c.JSON(http.StatusOK, response)
+}

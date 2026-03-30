@@ -265,3 +265,132 @@ func (h *AuthHandler) GetNewAccessToken(c *gin.Context) {
 		"token_type":   "Bearer",
 	})
 }
+
+// UploadProfilePicture allows an authenticated user to update their profile picture
+func (h *AuthHandler) UploadProfilePicture(c *gin.Context) {
+	// get current user
+	user, exists := c.Get("currentUser")
+	if !exists {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	currUser := user.(*schemas.UserInDB)
+	userID := currUser.ID.String()
+
+	// get the file
+	fileHeader, err := c.FormFile("profile_pic")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Profile picture file is required"})
+		return
+	}
+
+	// opening thje file
+	file, err := fileHeader.Open()
+	if err != nil {
+		log.Printf("Could not open profile pic file for user %s: %v", userID, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process the uploaded file"})
+		return
+	}
+	defer file.Close()
+
+	// reading and getting the file bytes
+	fileBytes, err := io.ReadAll(file)
+	if err != nil {
+		log.Printf("Failed to read profile pic file for user %s: %v", userID, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read the uploaded file"})
+		return
+	}
+
+	// uploading to s3 bucket
+	s3Key := fmt.Sprintf("%s/profileImage", userID)
+	contentType := fileHeader.Header.Get("Content-Type")
+	reader := bytes.NewReader(fileBytes)
+	_, err = h.s3.PutObject(c.Request.Context(), h.profile_bucket, s3Key, reader, contentType)
+
+	if err != nil {
+		log.Printf("Failed to upload profile pic to S3 for user %s: %v", userID, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save profile picture"})
+		return
+	}
+
+	// return success status
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Profile picture updated successfully",
+		"s3_key":  s3Key,
+	})
+}
+
+// update user info
+func (h *AuthHandler) UpdateProfileDetails(c *gin.Context) {
+	// 1. Get current logged-in user
+	user, exists := c.Get("currentUser")
+	if !exists {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	currUser := user.(*schemas.UserInDB)
+	userID := currUser.ID.String()
+
+	// 2. Define expected JSON payload (All fields are now optional)
+	var reqBody struct {
+		Email    string `json:"email"`
+		Username string `json:"username"`
+		DOB      string `json:"dob"`
+	}
+
+	if err := c.ShouldBindJSON(&reqBody); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		return
+	}
+
+	if reqBody.Email == "" && reqBody.Username == "" && reqBody.DOB == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No fields provided for update"})
+		return
+	}
+
+	// 3. Merge request data with existing user data (Partial Update Logic)
+	emailToUpdate := currUser.Email
+	if reqBody.Email != "" {
+		if !security.IsEmailLikelyValid(reqBody.Email) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid email format"})
+			return
+		}
+		emailToUpdate = reqBody.Email
+	}
+
+	usernameToUpdate := currUser.Username
+	if reqBody.Username != "" {
+		usernameToUpdate = reqBody.Username
+	}
+
+	dobToUpdate := currUser.DOB
+	if reqBody.DOB != "" {
+		parsedDob, err := time.Parse(time.RFC3339, reqBody.DOB)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid DOB format. Expected valid timestamp."})
+			return
+		}
+		dobToUpdate = parsedDob
+	}
+
+	// 4. Update Database
+	err := h.store.UpdateUserDetails(c.Request.Context(), userID, emailToUpdate, usernameToUpdate, dobToUpdate)
+	if err != nil {
+		// Handle cases where the requested email or username is already taken by someone else
+		if errors.Is(err, database.ErrEmailExists) || errors.Is(err, database.ErrUsernameExists) {
+			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+			return
+		}
+
+		log.Printf("Database error updating profile for user %s: %v", userID, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update profile details"})
+		return
+	}
+
+	// 5. Return success
+	c.JSON(http.StatusOK, gin.H{
+		"message":  "Profile updated successfully",
+		"username": usernameToUpdate,
+		"email":    emailToUpdate,
+	})
+}
