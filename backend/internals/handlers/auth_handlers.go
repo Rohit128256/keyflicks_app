@@ -29,10 +29,11 @@ type AuthHandler struct {
 	profile_bucket string
 }
 
-func NewAuthHandler(store *database.DbStore, jwt *auth.Jwt, redis *cache.RedisDB, prof_bucket string) *AuthHandler {
+func NewAuthHandler(store *database.DbStore, s3 *s3_store.S3Store, jwt *auth.Jwt, redis *cache.RedisDB, prof_bucket string) *AuthHandler {
 	return &AuthHandler{
 		store:          store,
 		jwt:            jwt,
+		s3:             s3,
 		redis:          redis,
 		profile_bucket: prof_bucket,
 	}
@@ -190,7 +191,7 @@ func (h *AuthHandler) UserLogin(c *gin.Context) {
 		} else {
 			// this is a server error
 			log.Printf("Database error in auth middleware: %v", err)
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Internal server error of pgsql"})
 		}
 		return
 	}
@@ -260,7 +261,7 @@ func (h *AuthHandler) GetNewAccessToken(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	c.JSON(http.StatusCreated, gin.H{
 		"access_token": newAccessToken,
 		"token_type":   "Bearer",
 	})

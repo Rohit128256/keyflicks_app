@@ -77,10 +77,9 @@ func (h *StreamHandler) Generate_upload_url(c *gin.Context) {
 	currUserid := currUser.ID.String()
 
 	// upload link generate step
-	filename := c.Param("filename")
+	filename := UserReqInfo.Filename
 
-	id := uuid.New().String()
-	video_id := strings.ReplaceAll(id, "-", "")
+	video_id := uuid.New().String()
 
 	ext := strings.ToLower(strings.TrimPrefix(filepath.Ext(filename), "."))
 	if ext == "" {

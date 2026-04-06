@@ -78,13 +78,13 @@ func (s *DbStore) GetUserByName(ctx context.Context, username string) (*schemas.
 	var user schemas.UserInDB
 
 	err := s.db.QueryRow(ctx, sql, username).Scan(
-		user.ID,
-		user.Email,
-		user.HashedPassword,
-		user.Username,
-		user.DOB,
-		user.CreatedAt,
-		user.UpdatedAt,
+		&user.ID,
+		&user.Email,
+		&user.HashedPassword,
+		&user.Username,
+		&user.DOB,
+		&user.CreatedAt,
+		&user.UpdatedAt,
 	)
 
 	if err != nil {
@@ -105,13 +105,13 @@ func (s *DbStore) GetUserByEmail(ctx context.Context, email string) (*schemas.Us
 	var user schemas.UserInDB
 
 	err := s.db.QueryRow(ctx, sql, email).Scan(
-		user.ID,
-		user.Email,
-		user.HashedPassword,
-		user.Username,
-		user.DOB,
-		user.CreatedAt,
-		user.UpdatedAt,
+		&user.ID,
+		&user.Email,
+		&user.HashedPassword,
+		&user.Username,
+		&user.DOB,
+		&user.CreatedAt,
+		&user.UpdatedAt,
 	)
 
 	if err != nil {
@@ -130,13 +130,13 @@ func (s *DbStore) GetVideoDetails(ctx context.Context, video_id string) (*schema
 
 	var video schemas.VideoInDb
 	err := s.db.QueryRow(ctx, sql, video_id).Scan(
-		video.ID,
-		video.Title,
-		video.Description,
-		video.Likes,
-		video.Comments,
-		video.CreatedAt,
-		video.UpdatedAt,
+		&video.ID,
+		&video.Title,
+		&video.Description,
+		&video.Likes,
+		&video.Comments,
+		&video.CreatedAt,
+		&video.UpdatedAt,
 	)
 
 	if err != nil {
@@ -160,7 +160,7 @@ func (s *DbStore) GetLikeState(ctx context.Context, video_id string, user_id str
 			WHERE v.id = $1;
 	`
 
-	err := s.db.QueryRow(ctx, query, video_id, user_id).Scan(LikeState.VideoLikes, LikeState.CurrUserLiked)
+	err := s.db.QueryRow(ctx, query, video_id, user_id).Scan(&LikeState.VideoLikes, &LikeState.CurrUserLiked)
 
 	if err != nil {
 		return nil, err

@@ -31,6 +31,7 @@ type UserInDB struct {
 type VideoUploadInfo struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
+	Filename    string `json:"file_name"`
 }
 
 type VideoInDb struct {
@@ -49,6 +50,8 @@ type GetlikeState struct {
 }
 
 type VideoComment struct {
+	ID          string `json:"video_id"`
+	PID         string `json:"parent_id"`
 	CommentText string `json:"text"`
 }
 

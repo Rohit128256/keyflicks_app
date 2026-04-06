@@ -86,7 +86,7 @@ func AuthMiddleware(store *database.DbStore, redis *cache.RedisDB, jwt *auth.Jwt
 				return
 			}
 			if redis != nil {
-				_ = redis.Set(bgCtx, cache_key, string(b), 9000)
+				_ = redis.Set(bgCtx, cache_key, string(b), 1000)
 			}
 		}(*CurrUser)
 

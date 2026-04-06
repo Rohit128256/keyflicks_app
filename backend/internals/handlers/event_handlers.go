@@ -174,10 +174,9 @@ func (h *EventHandler) Getlikes(c *gin.Context) {
 }
 
 func (h *EventHandler) PostComment(c *gin.Context) {
-	video_id := c.Query("video_id")
 	user, exists := c.Get("currentUser")
 
-	if !exists || video_id == "" {
+	if !exists {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
@@ -192,8 +191,16 @@ func (h *EventHandler) PostComment(c *gin.Context) {
 		return
 	}
 
+	video_id := commentPayload.ID
+	comment_text := commentPayload.CommentText
+
+	if video_id == "" || comment_text == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid or empty required field"})
+		return
+	}
+
 	// Checking if this is a reply to another comment
-	parent_id := c.Query("parent_id")
+	parent_id := commentPayload.PID
 
 	// Prepare the payload for the Redis Stream
 	streamKey := "stream:comments_ingest"
@@ -201,7 +208,7 @@ func (h *EventHandler) PostComment(c *gin.Context) {
 	values := map[string]any{
 		"video_id": video_id,
 		"user_id":  curruserId,
-		"text":     commentPayload.CommentText,
+		"text":     comment_text,
 		// Storing the exact timestamp now so the DB reflects exactly when the user clicked "post"
 		"created_at": time.Now().UTC().Format(time.RFC3339),
 	}

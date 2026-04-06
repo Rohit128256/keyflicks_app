@@ -121,6 +121,12 @@ func main() {
 	}
 	defer dbPool.Close()
 
+	// verify database connection
+	if err := dbPool.Ping(context.Background()); err != nil {
+		log.Fatalf("Database ping failed: %v\n", err)
+	}
+	log.Println("Connected to PostgreSQL successfully")
+
 	db_store := database.NewDbStore(dbPool)
 
 	// celery configuration
@@ -134,6 +140,14 @@ func main() {
 	redis_client := redis.NewClient(&redis.Options{
 		Addr: redis_url,
 	})
+
+	defer redis_client.Close()
+
+	// verify redis connection
+	if err := redis_client.Ping(context.Background()).Err(); err != nil {
+		log.Fatalf("Redis ping failed: %v\n", err)
+	}
+	log.Println("Connected to Redis successfully")
 
 	redis_ins := cache.NewRdisDB(redis_client)
 
@@ -156,7 +170,7 @@ func main() {
 
 	s3_ins := s3_store.NewS3Store(s3_client)
 
-	if err := ensureBuckets(context.Background(), s3_client, cfg.Region, s3_streaming_bucket, s3_pending_bucket); err != nil {
+	if err := ensureBuckets(context.Background(), s3_client, cfg.Region, s3_streaming_bucket, s3_pending_bucket, s3_profile_bucket); err != nil {
 		log.Fatalf("ensureBuckets error: %v", err)
 	}
 
@@ -165,7 +179,7 @@ func main() {
 
 	// now initializing different handlers handler
 	stream_handler := handlers.NewStreamHandler(s3_ins, db_store, redis_ins, celery_ins, uri_secret_token, s3_pending_bucket, s3_streaming_bucket, 1800)
-	auth_handler := handlers.NewAuthHandler(db_store, jwt_auth, redis_ins, s3_profile_bucket)
+	auth_handler := handlers.NewAuthHandler(db_store, s3_ins, jwt_auth, redis_ins, s3_profile_bucket)
 	event_handler := handlers.NewEventHandler(db_store, redis_ins)
 
 	// now inititalize the moddleware

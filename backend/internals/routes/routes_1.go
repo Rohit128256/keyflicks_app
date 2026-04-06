@@ -32,8 +32,8 @@ func SetupStreamingRoutes(
 		{
 
 			// Streaming & Video Management
-			protected.POST("/generate-upload-url/:filename", streamHandler.Generate_upload_url)
-			protected.GET("/stream-status/:upload_id", streamHandler.Stream_status)
+			protected.POST("/generate-upload-url", streamHandler.Generate_upload_url)
+			protected.GET("/stream-status", streamHandler.Stream_status)
 			protected.GET("/playlist/:video_id/:resolution_path", streamHandler.Sign_segments)
 			protected.GET("/master/:video_id", streamHandler.Modified_master)
 			protected.GET("/status/:upload_id", streamHandler.Get_status)
