@@ -6,6 +6,7 @@ import (
 	"keyflicks_app/internals/cache"
 	database "keyflicks_app/internals/db"
 	"keyflicks_app/internals/schemas"
+	"log"
 	"net/http"
 	"time"
 
@@ -50,6 +51,7 @@ func (h *EventHandler) ToggleLike(c *gin.Context) {
 		videoInfo, err := h.db.GetVideoDetails(c, video_id)
 
 		if err != nil {
+			log.Printf("Error fetching video details for caching: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "This service is not allowed currently!"})
 			return
 		}

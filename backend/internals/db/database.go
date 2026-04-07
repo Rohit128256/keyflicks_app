@@ -124,7 +124,7 @@ func (s *DbStore) GetUserByEmail(ctx context.Context, email string) (*schemas.Us
 // function to get Video details by video id
 func (s *DbStore) GetVideoDetails(ctx context.Context, video_id string) (*schemas.VideoInDb, error) {
 
-	sql := `SELECT id , title , decription , like_count , comment_count , created_at , updated_at
+	sql := `SELECT id , title , description , like_count , comment_count , created_at , updated_at
 			FROM videos
 			WHERE id = $1`
 

@@ -94,6 +94,7 @@ func (s *CommentsWriter) processBatch(ctx context.Context, stream, group, worker
 	var createdAts []time.Time
 
 	replyCountsMap := make(map[string]int)
+	videoCountsMap := make(map[string]int)
 	var msgIDs []string
 
 	// 1. Parse the payloads from Redis
@@ -101,7 +102,9 @@ func (s *CommentsWriter) processBatch(ctx context.Context, stream, group, worker
 		msgIDs = append(msgIDs, msg.ID)
 
 		userIDs = append(userIDs, msg.Values["user_id"].(string))
-		videoIDs = append(videoIDs, msg.Values["video_id"].(string))
+		vID := msg.Values["video_id"].(string)
+		videoIDs = append(videoIDs, vID)
+		videoCountsMap[vID]++
 		texts = append(texts, msg.Values["text"].(string))
 
 		// Parse timestamp back to time.Time
@@ -165,6 +168,36 @@ func (s *CommentsWriter) processBatch(ctx context.Context, stream, group, worker
 		if err != nil {
 			log.Printf("[%s] Bulk reply increment failed: %v", workerName, err)
 			return // Function exits, defer rolls back, messages stay in queue
+		}
+	}
+
+	if len(videoCountsMap) > 0 {
+		var updateVideoIDs []string
+		var newVideoComments []int
+
+		// Extract all the video IDs into a slice
+		for vID := range videoCountsMap {
+			updateVideoIDs = append(updateVideoIDs, vID)
+		}
+
+		// Sort lexicographically to prevent deadlocks between workers!
+		sort.Strings(updateVideoIDs)
+
+		// Build the counts array using the exact same sorted order
+		for _, vID := range updateVideoIDs {
+			newVideoComments = append(newVideoComments, videoCountsMap[vID])
+		}
+
+		updateVideoQuery := `
+			UPDATE videos AS v
+			SET comment_count = v.comment_count + unnested.new_comments
+			FROM UNNEST($1::uuid[], $2::int[]) AS unnested(video_id, new_comments)
+			WHERE v.id = unnested.video_id;
+		`
+		_, err = tx.Exec(ctx, updateVideoQuery, updateVideoIDs, newVideoComments)
+		if err != nil {
+			log.Printf("[%s] Bulk video comment increment failed: %v", workerName, err)
+			return // Function exits, defer rolls back
 		}
 	}
 

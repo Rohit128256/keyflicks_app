@@ -147,13 +147,13 @@ func (h *AuthHandler) UserRegister(c *gin.Context) {
 	}
 
 	c.SetCookie(
-		"refresh_token", // cookie name
-		refreshToken,    // cookie value
-		3600*24*60,      // max age in seconds (60 days)
-		"/",             // path
-		"",              // domain (frontend's domain in production)
-		true,            // secure (true = only send over HTTPS)
-		true,            // httpOnly (true = JavaScript can't read it)
+		"refresh_token",      // cookie name
+		refreshToken,         // cookie value
+		3600*24*60,           // max age in seconds (60 days)
+		"/api/refresh-token", // path
+		"",                   // domain (frontend's domain in production)
+		true,                 // secure (true = only send over HTTPS)
+		true,                 // httpOnly (true = JavaScript can't read it)
 	)
 
 	c.JSON(http.StatusCreated, gin.H{
@@ -217,13 +217,13 @@ func (h *AuthHandler) UserLogin(c *gin.Context) {
 	}
 
 	c.SetCookie(
-		"refresh_token", // cookie name
-		refreshToken,    // cookie value
-		3600*24*60,      // max age in seconds (60 days)
-		"/",             // path (only send to your auth routes)
-		"",              // domain (frontend's domain in production)
-		true,            // secure (true = only send over HTTPS)
-		true,            // httpOnly (true = JavaScript can't read it)
+		"refresh_token",      // cookie name
+		refreshToken,         // cookie value
+		3600*24*60,           // max age in seconds (60 days)
+		"/api/refresh-token", // path (only send to your auth routes)
+		"",                   // domain (frontend's domain in production)
+		true,                 // secure (true = only send over HTTPS)
+		true,                 // httpOnly (true = JavaScript can't read it)
 	)
 
 	c.JSON(http.StatusCreated, gin.H{

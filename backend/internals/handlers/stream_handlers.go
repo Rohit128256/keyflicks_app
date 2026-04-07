@@ -140,13 +140,13 @@ func (h *StreamHandler) Generate_upload_url(c *gin.Context) {
 	// cookie update
 
 	c.SetCookie(
-		"Transcode_status", // cookie name
-		video_id,           // cookie value
-		3600*24*2,          // max age in seconds (60 days)
-		"/",                // path
-		"",                 // domain (frontend's domain in production)
-		true,               // secure (true = only send over HTTPS)
-		true,               // httpOnly (true = JavaScript can't read it)
+		"Transcode_status",   // cookie name
+		video_id,             // cookie value
+		3600*24*2,            // max age in seconds (60 days)
+		"/api/stream-status", // path
+		"",                   // domain (frontend's domain in production)
+		true,                 // secure (true = only send over HTTPS)
+		true,                 // httpOnly (true = JavaScript can't read it)
 	)
 
 	// process the presigned url and response
