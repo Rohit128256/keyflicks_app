@@ -82,3 +82,8 @@ type ResponseVideoData struct {
 	Likes       int64  `json:"like_counts,omitempty"` // Changed to match your schema needs
 	CreatedAt   string `json:"created_at,omitempty"`
 }
+
+type DeleteCommentRequest struct {
+	CommentID string `json:"comment_id" binding:"required"`
+	VideoID   string `json:"video_id" binding:"required"`
+}

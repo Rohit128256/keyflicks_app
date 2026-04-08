@@ -329,3 +329,49 @@ func (h *EventHandler) GetComments(c *gin.Context) {
 		NextCursor: nextCursor,
 	})
 }
+
+func (h *EventHandler) DeleteComment(c *gin.Context) {
+	user, exists := c.Get("currentUser")
+	if !exists {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	currUser := user.(*schemas.UserInDB)
+	currUserID := currUser.ID.String()
+
+	// 1. Bind and Validate Payload
+	var req schemas.DeleteCommentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload. comment_id and video_id are required."})
+		return
+	}
+
+	// 2. Push to the Delete Stream
+	streamKey := "stream:comments_delete"
+
+	err := h.redis.Client.XAdd(c.Request.Context(), &redis.XAddArgs{
+		Stream: streamKey,
+		Values: map[string]interface{}{
+			"comment_id": req.CommentID,
+			"user_id":    currUserID,
+		},
+	}).Err()
+
+	if err != nil {
+		log.Printf("Failed to push delete event to stream for comment %s: %v", req.CommentID, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to queue comment for deletion"})
+		return
+	}
+
+	// 3. Invalidate the Cache Instantly
+	// (Assuming you have a method like DeleteFirstPageComments or you can use the raw client)
+	// This ensures the deleted comment vanishes immediately if the user reloads the page.
+	cacheKey := fmt.Sprintf("comments_first_page:%s", req.VideoID) // Adjust this key to match what SetFirstPageComments uses
+	h.redis.Client.Del(c.Request.Context(), cacheKey)
+
+	// 4. Return instant success
+	c.JSON(http.StatusAccepted, gin.H{
+		"message": "Comment queued for deletion",
+	})
+}
