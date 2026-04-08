@@ -480,7 +480,7 @@ func (h *StreamHandler) Modified_master(c *gin.Context) {
 
 // handler function to see the status of video using video id (can be used with auth middleware needs to be modified according to database (currently relies on s3))
 func (h *StreamHandler) Get_status(c *gin.Context) {
-	uploadID := c.Param("upload_id")
+	uploadID := c.Param("video_id")
 	cacheKey := fmt.Sprintf("upload_status:%s", uploadID)
 
 	// fetch from the cache first.
