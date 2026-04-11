@@ -192,14 +192,12 @@ func main() {
 	dbWriterService := services.NewDBWriter(dbPool, redis_client, 3)
 	commentsWriterService := services.NewCommentsWriter(dbPool, redis_ins, 3)
 	commentsDeleterService := services.NewCommentsDeleter(dbPool, redis_ins, 3)
-	likeSyncerService := services.NewLikeSyncer(dbPool, redis_ins)
-	counterSyncerService := services.NewCounterSyncer(dbPool, redis_ins)
+	likeStreamUpdaterService := services.NewStreamLikesWorker(dbPool, redis_ins)
 
 	// starting the background services
 	go dbWriterService.Start(bgCtx)
 	go commentsWriterService.Start(bgCtx)
-	go likeSyncerService.Start(bgCtx)
-	go counterSyncerService.Start(bgCtx, 2)
+	go likeStreamUpdaterService.Start(bgCtx, 2)
 	go commentsDeleterService.Start(bgCtx)
 
 	log.Printf("All the Services are running")
