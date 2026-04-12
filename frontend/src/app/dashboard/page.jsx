@@ -1,11 +1,11 @@
 'use client';
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
-import { User, Trash2, Play, UploadCloud, Loader2 } from 'lucide-react';
+import { User, Trash2, Play, UploadCloud, Loader2, FileVideo, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 
 export default function DashboardPage() {
@@ -13,6 +13,9 @@ export default function DashboardPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const observerTarget = useRef(null);
+
+  const [videoToDelete, setVideoToDelete] = useState(null);
+  const [isDeletingId, setIsDeletingId] = useState(null);
 
   useEffect(() => {
     if (!isAuthenticated) router.push('/login');
@@ -81,11 +84,24 @@ export default function DashboardPage() {
     onSuccess: () => {
       toast.success("Video securely deleted");
       queryClient.invalidateQueries({ queryKey: ['my-videos'] });
+      setIsDeletingId(null);
     },
     onError: (err) => {
       toast.error(err.response?.data?.error || "Failed to delete video");
+      setIsDeletingId(null);
     }
   });
+
+  const confirmDelete = () => {
+    if (!videoToDelete) return;
+    setIsDeletingId(videoToDelete.id);
+    setVideoToDelete(null);
+    
+    // Allow animation to play before violently detaching from DOM
+    setTimeout(() => {
+       deleteVideoMutation.mutate(videoToDelete.id);
+    }, 300);
+  };
 
   if (!isAuthenticated) return null;
 
@@ -131,10 +147,10 @@ export default function DashboardPage() {
       <div className="mt-4 flex justify-between items-end mb-2 px-2">
          <div>
             <h3 className="text-xl font-bold text-white mb-1">Your secure library</h3>
-            <p className="text-xs text-white/40 uppercase tracking-widest font-semibold flex items-center gap-2">
+            <div className="text-xs text-white/40 uppercase tracking-widest font-semibold flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></div>
               Encrypted Vault
-            </p>
+            </div>
          </div>
          <Link 
            href="/upload" 
@@ -150,7 +166,7 @@ export default function DashboardPage() {
             page.videos?.map(video => (
                <div 
                  key={video.id} 
-                 className="flex flex-col justify-between border rounded-2xl p-5 relative overflow-hidden group transition-all hover:bg-white/5"
+                 className={`flex flex-col justify-between border rounded-2xl p-5 relative overflow-hidden group transition-all duration-300 ${isDeletingId === video.id ? 'opacity-0 scale-90' : 'opacity-100 scale-100 hover:bg-white/5'}`}
                  style={{
                    background: 'rgba(255,255,255,0.02)',
                    borderColor: 'rgba(255,255,255,0.06)',
@@ -176,11 +192,11 @@ export default function DashboardPage() {
                          <Play size={14} fill="currentColor" /> Watch
                       </Link>
                       <button 
-                        onClick={() => deleteVideoMutation.mutate(video.id)}
-                        disabled={deleteVideoMutation.isPending}
+                        onClick={() => setVideoToDelete(video)}
+                        disabled={isDeletingId === video.id}
                         className="flex items-center justify-center bg-red-500/10 hover:bg-red-500/20 text-red-500 w-10 rounded-xl transition-colors disabled:opacity-50"
                       >
-                          <Trash2 size={14} />
+                          {isDeletingId === video.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                       </button>
                   </div>
                </div>
@@ -205,12 +221,47 @@ export default function DashboardPage() {
          
          {status === 'success' && data.pages[0]?.videos?.length === 0 && (
              <div className="flex flex-col items-center justify-center py-20 w-full text-center">
-                <Video size={48} className="text-white/10 mb-4" />
+                <FileVideo size={48} className="text-white/10 mb-4" />
                 <h3 className="text-white/60 font-medium mb-2">Vault is Empty</h3>
                 <p className="text-white/30 text-sm font-light max-w-sm">You haven't uploaded any secure videos yet. Click "Upload New" to store your premium content.</p>
              </div>
          )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {videoToDelete && (
+         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]">
+            <div 
+              className="w-full max-w-sm rounded-[24px] overflow-hidden border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.8)] flex flex-col p-8 items-center text-center animate-[scaleIn_0.2s_ease-out]"
+              style={{ background: 'linear-gradient(135deg, rgba(30,30,30,0.9), rgba(15,15,15,0.95))' }}
+            >
+               <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-6 border border-red-500/20 shadow-[0_0_30px_rgba(239,68,68,0.2)]">
+                  <AlertTriangle size={28} className="text-red-500" />
+               </div>
+               
+               <h3 className="text-xl font-bold text-white mb-2">Delete Video?</h3>
+               <p className="text-white/40 text-sm leading-relaxed mb-8">This action is permanent and will permanently delete <span className="text-white truncate font-semibold block mt-1 px-4">{videoToDelete.title || videoToDelete.id}</span></p>
+               
+               <div className="w-full flex gap-3">
+                  <button 
+                    onClick={() => setVideoToDelete(null)}
+                    disabled={isDeletingId}
+                    className="flex-1 py-3.5 rounded-xl text-sm font-bold text-white/60 bg-white/5 hover:bg-white/10 hover:text-white transition-all disabled:opacity-50"
+                  >
+                     Cancel
+                  </button>
+                  <button 
+                    onClick={confirmDelete}
+                    disabled={isDeletingId}
+                    className="flex-1 py-3.5 rounded-xl text-sm font-bold text-white transition-all hover:bg-red-500/90 shadow-[0_4px_20px_rgba(239,68,68,0.3)] disabled:opacity-50 flex justify-center items-center gap-2"
+                    style={{ background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)' }}
+                  >
+                     {isDeletingId ? <Loader2 size={16} className="animate-spin" /> : "Yes, Delete"}
+                  </button>
+               </div>
+            </div>
+         </div>
+      )}
 
     </div>
   );
