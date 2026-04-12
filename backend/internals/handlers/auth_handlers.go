@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -267,6 +268,87 @@ func (h *AuthHandler) GetNewAccessToken(c *gin.Context) {
 	})
 }
 
+func (h *AuthHandler) GetOwnDetails(c *gin.Context) {
+	// extract the user set by the AuthMiddleware
+	userInter, exists := c.Get("currentUser")
+	if !exists {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	currUser := userInter.(*schemas.UserInDB)
+
+	// Return only the requested fields
+	c.JSON(http.StatusOK, gin.H{
+		"userid":   currUser.ID,
+		"username": currUser.Username,
+		"email":    currUser.Email,
+		"dob":      currUser.DOB,
+	})
+}
+
+func (h *AuthHandler) GetUserDetails(c *gin.Context) {
+	username := c.Param("username")
+	if username == "" {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "username parameter is required"})
+		return
+	}
+
+	cacheKey := fmt.Sprintf("UserProfile:%s", username)
+
+	// check Cache first
+	if cachedData, err := h.redis.Get(c.Request.Context(), cacheKey); err == nil && cachedData != "" {
+		var userData map[string]any
+		if err := json.Unmarshal([]byte(cachedData), &userData); err == nil {
+			// Cache hit: Return immediately
+			c.JSON(http.StatusOK, userData)
+			return
+		}
+	}
+
+	// 2. Cache Miss: Fetch from database
+	userFromDB, err := h.store.GetUserByName(c.Request.Context(), username)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		} else {
+			log.Printf("Database error fetching user %s: %v", username, err)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		}
+		return
+	}
+
+	// Build the response object with specific fields
+	response := gin.H{
+		"userid":   userFromDB.ID,
+		"username": userFromDB.Username,
+		"email":    userFromDB.Email,
+		"dob":      userFromDB.DOB,
+	}
+
+	// 3. Set Cache in the background (Non-blocking)
+	go func(data map[string]any) {
+		bgCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		b, err := json.Marshal(data)
+		if err != nil {
+			log.Printf("Failed to marshal user data for cache: %v", err)
+			return
+		}
+
+		if h.redis != nil {
+			// Cache the profile for 15 minutes (900 seconds)
+			err = h.redis.Set(bgCtx, cacheKey, string(b), 900)
+			if err != nil {
+				log.Printf("Failed to set redis cache for user profile %s: %v", username, err)
+			}
+		}
+	}(response)
+
+	c.JSON(http.StatusOK, response)
+}
+
 // UploadProfilePicture allows an authenticated user to update their profile picture
 func (h *AuthHandler) UploadProfilePicture(c *gin.Context) {
 	// get current user
@@ -393,5 +475,12 @@ func (h *AuthHandler) UpdateProfileDetails(c *gin.Context) {
 		"message":  "Profile updated successfully",
 		"username": usernameToUpdate,
 		"email":    emailToUpdate,
+	})
+}
+
+func (h *AuthHandler) UserLogout(c *gin.Context) {
+	c.SetCookie("refresh_token", "", -1, "/", "", false, true)
+	c.JSON(200, gin.H{
+		"message": "Successfully logged out",
 	})
 }

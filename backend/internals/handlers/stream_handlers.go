@@ -140,13 +140,13 @@ func (h *StreamHandler) Generate_upload_url(c *gin.Context) {
 	// cookie update
 
 	c.SetCookie(
-		"Transcode_status",   // cookie name
-		video_id,             // cookie value
-		3600*24*2,            // max age in seconds (60 days)
-		"/api/stream-status", // path
-		"",                   // domain (frontend's domain in production)
-		true,                 // secure (true = only send over HTTPS)
-		true,                 // httpOnly (true = JavaScript can't read it)
+		"Transcode_status", // cookie name
+		video_id,           // cookie value
+		3600*36,            // max age in seconds (2 days)
+		"/",                // path
+		"",                 // domain (frontend's domain in production)
+		true,               // secure (true = only send over HTTPS)
+		false,              // httpOnly (true = JavaScript can't read it)
 	)
 
 	// process the presigned url and response
@@ -244,28 +244,33 @@ func (h *StreamHandler) Handle_s3_event(c *gin.Context) {
 // stream status sse handler (ready to use with jwt middleware)
 func (h *StreamHandler) Stream_status(c *gin.Context) {
 
-	upload_id, err := c.Cookie("Transcode_status")
-
-	if err != nil {
-		c.JSON(http.StatusNoContent, gin.H{"error": "Video cookie missing !!"})
-		return
+	upload_id := c.Query("video_id")
+	if upload_id == "" {
+		upload_id, _ = c.Cookie("Transcode_status")
 	}
 
 	if upload_id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "upload_id is required"})
+		c.JSON(http.StatusNoContent, gin.H{"error": "Video connection identity missing !!"})
 		return
 	}
 
 	// Setting the headers needed for Server-Sent Events
+
 	c.Writer.Header().Set("Content-Type", "text/event-stream")
 	c.Writer.Header().Set("Cache-Control", "no-cache")
 	c.Writer.Header().Set("Connection", "keep-alive")
 	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 
-	sseStream := fmt.Sprintf("job_status:%s", upload_id)
+	// Force flush headers to explicitly trigger the client's `onopen` immediately
+	// Resolves infinite loading spinner states when proxied through Next.js
 
+	c.Writer.Flush()
+
+	sseStream := fmt.Sprintf("job_status:%s", upload_id)
 	ctx := c.Request.Context()
+
 	// This ensures a reconnecting user gets all messages.
+
 	lastMessageID := "0-0"
 
 	c.Stream(func(w io.Writer) bool {
@@ -278,30 +283,37 @@ func (h *StreamHandler) Stream_status(c *gin.Context) {
 
 		if err != nil {
 			if errors.Is(err, redis.Nil) {
-				// This is a timeout, which is normal.
 				// It just means no new messages. Stay connected.
+				fmt.Fprintf(w, ": heartbeat\n\n")
 				return true
 			}
+
 			if errors.Is(err, context.Canceled) {
 				// Client disconnected
 				log.Printf("SSE: Client disconnected for %s", upload_id)
 				return false
+
 			}
+
 			// A real Redis error
 			log.Printf("SSE: Redis stream error for %s: %v", upload_id, err)
 			return false // Close the connection
+
 		}
 
 		// We got a message, process it
+
 		if len(streams) > 0 && len(streams[0].Messages) > 0 {
 			msg := streams[0].Messages[0]
 			lastMessageID = msg.ID // IMPORTANT: Update so we get the *next* message
 
 			// Get status from message values
 			status, ok := msg.Values["status"].(string)
+
 			if !ok {
 				log.Printf("SSE: Malformed message in stream %s", sseStream)
 				return true // Skip bad message
+
 			}
 
 			log.Printf("SSE: Got status '%s' for upload %s", status, upload_id)
@@ -310,35 +322,33 @@ func (h *StreamHandler) Stream_status(c *gin.Context) {
 			type sseInnerData struct {
 				Status string `json:"status"`
 			}
+
 			type sseOuterData struct {
 				Data sseInnerData `json:"data"`
 			}
+
 			ssePayload := sseOuterData{Data: sseInnerData{Status: status}}
 			jsonBytes, _ := json.Marshal(ssePayload)
 
 			fmt.Fprintf(w, "data: %s\n\n", string(jsonBytes))
+
 			c.Writer.Flush()
 
 			// --- 6. HANDLE FINAL MESSAGE & CLEANUP ---
 			if status == "ready" || status == "failed" {
-				log.Printf("SSE: Got final status '%s' for %s. Closing and cleaning up.", status, upload_id)
 
+				log.Printf("SSE: Got final status '%s' for %s. Closing and cleaning up.", status, upload_id)
 				// Delete the cookie
 				c.SetCookie("Transcode_status", "", -1, "/", "", true, true)
 
-				// Delete the Redis Stream
-				// We run this in a background goroutine so it doesn't
-				// delay closing the connection.
-				go func() {
-					h.redis.Client.Del(context.Background(), sseStream)
-					log.Printf("SSE: Cleaned up stream %s", sseStream)
-				}()
-
 				return false // false = close stream
+
 			}
+
 		}
 
 		return true // true = continue stream
+
 	})
 }
 
@@ -807,4 +817,26 @@ func (h *StreamHandler) Get_uploaded_videos_by_user(c *gin.Context) {
 
 	// 9. Send Response
 	c.JSON(http.StatusOK, response)
+}
+
+func (h *StreamHandler) DeleteSSEStream(c *gin.Context) {
+	video_id := c.Query("video_id")
+	if video_id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "video_id is required"})
+		return
+	}
+
+	sseStream := fmt.Sprintf("job_status:%s", video_id)
+	go func() {
+		err := h.redis.Client.Del(context.Background(), sseStream).Err()
+		if err != nil {
+			log.Printf("SSE: Failed to clean up stream %s: %v", sseStream, err)
+		} else {
+			log.Printf("SSE: Cleaned up stream %s", sseStream)
+		}
+	}()
+
+	c.SetCookie("Transcode_status", "", -1, "/", "", true, false)
+
+	c.Status(http.StatusNoContent)
 }

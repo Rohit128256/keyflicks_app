@@ -49,37 +49,37 @@ func (w *StreamLikesWorker) hashVideoID(videoID string, numWorkers int) int {
 }
 
 // Start initializes the worker channels and kicks off the stream consumer
-func (w *StreamLikesWorker) Start(ctx context.Context, numWorkers int) {
-	log.Printf("Starting StreamLikesWorker with %d partitioned workers...", numWorkers)
+func (w *StreamLikesWorker) Start(ctx context.Context, numWorkers int, numRouters int) {
+	log.Printf("Starting StreamLikesWorker with %d partitioned workers and %d routers...", numWorkers, numRouters)
 
-	// 1. Create a slice of buffered channels.
-	// We use a buffer of 1000 so the central router doesn't block if a worker is busy writing to the DB.
+	// 1. Create the consumer group ONCE before starting routers
+	streamKey := "stream:likes_ingest"
+	groupName := "likes_worker_group"
+
+	err := w.redis.Client.XGroupCreateMkStream(ctx, streamKey, groupName, "0").Err()
+	if err != nil && err.Error() != "BUSYGROUP Consumer Group name already exists" {
+		log.Fatalf("Failed to create consumer group: %v", err)
+	}
+
+	// 2. Create the slice of buffered channels
 	workerChannels := make([]chan LikeEvent, numWorkers)
 	for i := 0; i < numWorkers; i++ {
 		workerChannels[i] = make(chan LikeEvent, 1000)
-
-		// Start the individual worker goroutine
 		go w.workerLoop(ctx, i, workerChannels[i])
 	}
 
-	// 2. Start the central stream consumer that routes events to the workers
-	go w.consumeStream(ctx, numWorkers, workerChannels)
+	// 3. Start MULTIPLE stream consumers (routers)
+	for i := 0; i < numRouters; i++ {
+		consumerName := fmt.Sprintf("router_%d", i) // Unique name for each router
+		go w.consumeStream(ctx, numWorkers, workerChannels, streamKey, groupName, consumerName)
+	}
 
 	<-ctx.Done()
 	log.Println("StreamLikesWorker shutting down gracefully...")
 }
 
-// consumeStream is the central router. It reads from Redis and partitions data by VideoID.
-func (w *StreamLikesWorker) consumeStream(ctx context.Context, numWorkers int, channels []chan LikeEvent) {
-	streamKey := "stream:likes_ingest"
-	groupName := "likes_worker_group"
-	consumerName := "central_router"
-
-	// Ensure the consumer group exists. Ignore error if it already exists (BUSYGROUP)
-	err := w.redis.Client.XGroupCreateMkStream(ctx, streamKey, groupName, "0").Err()
-	if err != nil && err.Error() != "BUSYGROUP Consumer Group name already exists" {
-		log.Fatalf("Failed to create consumer group: %v", err)
-	}
+func (w *StreamLikesWorker) consumeStream(ctx context.Context, numWorkers int, channels []chan LikeEvent, streamKey, groupName, consumerName string) {
+	log.Printf("Router %s started...", consumerName)
 
 	for {
 		select {
@@ -89,22 +89,22 @@ func (w *StreamLikesWorker) consumeStream(ctx context.Context, numWorkers int, c
 			// Block for up to 2 seconds waiting for new messages
 			streams, err := w.redis.Client.XReadGroup(ctx, &redis.XReadGroupArgs{
 				Group:    groupName,
-				Consumer: consumerName,
-				Streams:  []string{streamKey, ">"}, // ">" means give us messages never delivered to other consumers
-				Count:    1000,                     // Pull up to 1000 events at a time
+				Consumer: consumerName, // Use the dynamically passed name
+				Streams:  []string{streamKey, ">"},
+				Count:    1000,
 				Block:    2 * time.Second,
 			}).Result()
 
 			if err != nil {
 				if err == redis.Nil {
-					continue // Stream empty, blocked timeout reached, loop again
+					continue // Stream empty, loop again
 				}
-				log.Printf("Error reading from stream: %v", err)
+				log.Printf("[%s] Error reading from stream: %v", consumerName, err)
 				time.Sleep(1 * time.Second) // Backoff on error
 				continue
 			}
 
-			// Route each message to the correct worker
+			// routing and hashing logic
 			for _, stream := range streams {
 				for _, msg := range stream.Messages {
 					vID, ok1 := msg.Values["video_id"].(string)

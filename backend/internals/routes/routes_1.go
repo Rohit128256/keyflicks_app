@@ -40,6 +40,7 @@ func SetupStreamingRoutes(
 			protected.GET("/my-videos", streamHandler.Get_uploaded_videos)
 			protected.GET("/get-videos", streamHandler.Get_uploaded_videos_by_user)
 			protected.DELETE("/video/:video_id", streamHandler.Delete_video)
+			protected.POST("/stream-ack", streamHandler.DeleteSSEStream)
 
 			// Interactions (Likes & Comments)
 			protected.POST("/like", eventHandler.ToggleLike)
@@ -48,9 +49,16 @@ func SetupStreamingRoutes(
 			protected.GET("/comments", eventHandler.GetComments)
 			protected.DELETE("/delcomment", eventHandler.DeleteComment)
 
+			// User Information Endpoints
+			protected.GET("/profile/me", authHandler.GetOwnDetails)
+			protected.GET("/profile/:username", authHandler.GetUserDetails)
+
 			// profile updating handlers
 			protected.PUT("/profile/details", authHandler.UpdateProfileDetails)
 			protected.PUT("/profile/picture", authHandler.UploadProfilePicture)
+
+			//logout
+			protected.POST("/logout", authHandler.UserLogout)
 		}
 	}
 }

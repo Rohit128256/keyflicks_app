@@ -197,7 +197,7 @@ func main() {
 	// starting the background services
 	go dbWriterService.Start(bgCtx)
 	go commentsWriterService.Start(bgCtx)
-	go likeStreamUpdaterService.Start(bgCtx, 2)
+	go likeStreamUpdaterService.Start(bgCtx, 3, 2)
 	go commentsDeleterService.Start(bgCtx)
 
 	log.Printf("All the Services are running")
