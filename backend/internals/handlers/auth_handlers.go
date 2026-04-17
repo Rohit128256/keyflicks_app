@@ -479,7 +479,7 @@ func (h *AuthHandler) UpdateProfileDetails(c *gin.Context) {
 }
 
 func (h *AuthHandler) UserLogout(c *gin.Context) {
-	c.SetCookie("refresh_token", "", -1, "/", "", false, true)
+	c.SetCookie("refresh_token", "", -1, "/api/refresh-token", "", false, true)
 	c.JSON(200, gin.H{
 		"message": "Successfully logged out",
 	})

@@ -171,9 +171,10 @@ func (s *CommentsWriter) processBatch(ctx context.Context, stream, group, worker
 		}
 	}
 
+	var updateVideoIDs []string
+	var newVideoComments []int
+
 	if len(videoCountsMap) > 0 {
-		var updateVideoIDs []string
-		var newVideoComments []int
 
 		// Extract all the video IDs into a slice
 		for vID := range videoCountsMap {
@@ -207,7 +208,32 @@ func (s *CommentsWriter) processBatch(ctx context.Context, stream, group, worker
 		return
 	}
 
-	// 6. Acknowledge the messages to remove them from the Redis pending queue
+	// 6. Update the Cache Counter only if field exists
+	if len(updateVideoIDs) > 0 {
+		pipe := s.redis.Client.Pipeline()
+
+		// LUA SCRIPT: Protects against the "HINCRBY Initialization Bug"
+		// Only increments if the cache is already warm.
+		luaScript := `
+			if redis.call("HEXISTS", KEYS[1], ARGV[1]) == 1 then
+				return redis.call("HINCRBY", KEYS[1], ARGV[1], ARGV[2])
+			end
+			return 0
+		`
+
+		for i, vid := range updateVideoIDs {
+			counterKey := fmt.Sprintf("vid:%s:stats", vid)
+			// Pass the script, the key (KEYS[1]), the field (ARGV[1]), and the delta (ARGV[2])
+			pipe.Eval(ctx, luaScript, []string{counterKey}, "comments", newVideoComments[i])
+		}
+
+		_, err := pipe.Exec(ctx)
+		if err != nil && err != redis.Nil {
+			log.Printf("[%s] Non-fatal error updating redis cache: %v", workerName, err)
+		}
+	}
+
+	// 7. Acknowledge the messages to remove them from the Redis pending queue
 	err = s.redis.Client.XAck(ctx, stream, group, msgIDs...).Err()
 	if err != nil {
 		log.Printf("[%s] Failed to XAck messages: %v", workerName, err)

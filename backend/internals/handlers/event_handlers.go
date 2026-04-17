@@ -147,7 +147,7 @@ func (h *EventHandler) Getlikes(c *gin.Context) {
 
 			healPipe := h.redis.Pipeline()
 
-			// Heal Counter (Using HSet to ensure DB truth overwrites any stale cache)
+			// Heal Counter (Using HSetNX to ensure DB truth overwrites any stale cache)
 			healPipe.HSetNX(bgCtx, cKey, "likes", likes)
 			healPipe.Expire(bgCtx, cKey, 30*time.Minute)
 
@@ -234,7 +234,8 @@ func (h *EventHandler) PostComment(c *gin.Context) {
 func (h *EventHandler) GetComments(c *gin.Context) {
 	videoID := c.Query("video_id")
 	parentIDStr := c.Query("parent_id")
-	cursorStr := c.Query("cursor")
+	cursorTimeStr := c.Query("cursor_time") // Updated param
+	cursorIDStr := c.Query("cursor_id")     // New param
 
 	user, exists := c.Get("currentUser")
 	if !exists || videoID == "" {
@@ -251,11 +252,14 @@ func (h *EventHandler) GetComments(c *gin.Context) {
 		parentID = &parentIDStr
 	}
 
-	var cursor *time.Time
-	if cursorStr != "" {
-		parsedTime, err := time.Parse(time.RFC3339, cursorStr)
+	var cursorTime *time.Time
+	var cursorID *string
+
+	if cursorTimeStr != "" && cursorIDStr != "" {
+		parsedTime, err := time.Parse(time.RFC3339, cursorTimeStr)
 		if err == nil {
-			cursor = &parsedTime
+			cursorTime = &parsedTime
+			cursorID = &cursorIDStr
 		}
 	}
 
@@ -265,7 +269,7 @@ func (h *EventHandler) GetComments(c *gin.Context) {
 	var comments []schemas.CommentResponse
 	var err error
 
-	isFirstPageTopLevel := parentID == nil && cursor == nil
+	isFirstPageTopLevel := parentID == nil && cursorTime == nil
 
 	if isFirstPageTopLevel {
 		comments, err = h.redis.GetFirstPageComments(c.Request.Context(), videoID)
@@ -273,7 +277,7 @@ func (h *EventHandler) GetComments(c *gin.Context) {
 
 	// 3. Database Fallback
 	if len(comments) == 0 {
-		comments, err = h.db.GetComments(c.Request.Context(), videoID, parentID, cursor, limit)
+		comments, err = h.db.GetComments(c.Request.Context(), videoID, parentID, cursorTime, cursorID, limit)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch comments"})
 			return
@@ -311,16 +315,20 @@ func (h *EventHandler) GetComments(c *gin.Context) {
 	}
 
 	// 4. Calculate Next Cursor
-	var nextCursor *time.Time
-	if len(comments) >= limit { // Changed to >= because we might have prepended one, making len 21
-		lastCommentTime := comments[len(comments)-1].CreatedAt
-		nextCursor = &lastCommentTime
+	var nextCursorTime *time.Time
+	var nextCursorID *string
+
+	if len(comments) >= limit {
+		lastComment := comments[len(comments)-1]
+		nextCursorTime = &lastComment.CreatedAt
+		nextCursorID = &lastComment.ID
 	}
 
 	// 5. Send Response
-	c.JSON(http.StatusOK, schemas.PaginatedComments{
-		Comments:   comments,
-		NextCursor: nextCursor,
+	c.JSON(http.StatusOK, gin.H{
+		"comments":         comments,
+		"next_cursor_time": nextCursorTime,
+		"next_cursor_id":   nextCursorID,
 	})
 }
 
@@ -346,7 +354,7 @@ func (h *EventHandler) DeleteComment(c *gin.Context) {
 
 	err := h.redis.Client.XAdd(c.Request.Context(), &redis.XAddArgs{
 		Stream: streamKey,
-		Values: map[string]interface{}{
+		Values: map[string]any{
 			"comment_id": req.CommentID,
 			"user_id":    currUserID,
 		},
@@ -361,11 +369,76 @@ func (h *EventHandler) DeleteComment(c *gin.Context) {
 	// 3. Invalidate the Cache Instantly
 	// (Assuming you have a method like DeleteFirstPageComments or you can use the raw client)
 	// This ensures the deleted comment vanishes immediately if the user reloads the page.
-	cacheKey := fmt.Sprintf("comments_first_page:%s", req.VideoID) // Adjust this key to match what SetFirstPageComments uses
+	cacheKey := fmt.Sprintf("video:%s:comments:first_page", req.VideoID) // Adjust this key to match what SetFirstPageComments uses
 	h.redis.Client.Del(c.Request.Context(), cacheKey)
 
 	// 4. Return instant success
 	c.JSON(http.StatusAccepted, gin.H{
 		"message": "Comment queued for deletion",
+	})
+}
+
+func (h *EventHandler) GetCommentsCount(c *gin.Context) {
+	video_id := c.Query("video_id")
+
+	if video_id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "video_id is required"})
+		return
+	}
+
+	counterKey := fmt.Sprintf("vid:%s:stats", video_id)
+
+	// 1. Fast Cache Read
+	countCmd := h.redis.Client.HGet(c.Request.Context(), counterKey, "comments")
+
+	var videoComments int64
+	needsDBFallback := false
+
+	if countCmd.Err() == nil {
+		videoComments, _ = countCmd.Int64()
+	} else if countCmd.Err() == redis.Nil {
+		needsDBFallback = true
+	} else {
+		// Log actual connection/network errors but still fallback to DB to save the UX
+		log.Printf("Redis error fetching comments count for %s: %v", video_id, countCmd.Err())
+		needsDBFallback = true
+	}
+
+	// 2. Database Fallback (Source of Truth)
+	if needsDBFallback {
+		// Using your existing db method!
+		videoInfo, err := h.db.GetVideoDetails(c.Request.Context(), video_id)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Video not found"})
+			return
+		}
+
+		videoComments = videoInfo.Comments
+
+		// 3. Asynchronously HEAL THE CACHE
+		go func(vID string, comments int64) {
+			bgCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			defer cancel()
+
+			cKey := fmt.Sprintf("vid:%s:stats", vID)
+
+			healPipe := h.redis.Client.Pipeline()
+
+			// HSetNX is CRUCIAL here. It guarantees we only set the cache if it doesn't exist.
+			// This prevents this DB fallback from accidentally overwriting a newer comment count
+			// that the `comment_writer.go` worker might have *just* pushed 1 millisecond ago!
+			healPipe.HSetNX(bgCtx, cKey, "comments", comments)
+			healPipe.Expire(bgCtx, cKey, 30*time.Minute)
+
+			_, err := healPipe.Exec(bgCtx)
+			if err != nil {
+				log.Printf("Failed to heal comments cache for video %s: %v", vID, err)
+			}
+		}(video_id, videoComments)
+	}
+
+	// 4. Return the perfectly accurate payload
+	c.JSON(http.StatusOK, gin.H{
+		"comment_counts": videoComments,
 	})
 }

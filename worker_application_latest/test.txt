@@ -1,0 +1,1701 @@
+] Task tasks.transcode_and_upload_video[c976c8cd-f7fc-4415-ab41-6be0b8997494] received
+[2025-08-20 20:39:20,088: WARNING/MainProcess] Worker generated presigned URL for pending/759ebfcc732b4c9ea2ea322ca3fe63ff.mp4
+[2025-08-20 20:39:20,088: WARNING/MainProcess] Worker starting transcoding for 759ebfcc732b4c9ea2ea322ca3fe63ff from URL
+ffmpeg version 7.1.1-essentials_build-www.gyan.devffmpeg version 7.1.1-essentials_build-www.gyan.dev Copyright (c) 2000-2025 the FFmpeg developers Copyright (c) 2000-2025 the FFmpeg developers
+
+  built with gcc 14.2.0 (Rev1, Built by MSYS2 project)
+  built with gcc 14.2.0 (Rev1, Built by MSYS2 project)
+  configuration: --enable-gpl --enable-version3 --enable-static --disable-w32threads --disable-autodetect --enable-fontconfig --enable-iconv --enable-gnutls --enable-libxml2 --enable-gmp --enable-bzlib --enable-lzma --enable-zlib --enable-libsrt --enable-libssh --enable-libzmq --enable-avisynth --enable-sdl2 --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxvid --enable-libaom --enable-libopenjpeg --enable-libvpx --enable-mediafoundation --enable-libass --enable-libfreetype --enable-libfribidi --enable-libharfbuzz --enable-libvidstab --enable-libvmaf --enable-libzimg --enable-amf --enable-cuda-llvm --enable-cuvid --enable-dxva2 --enable-d3d11va --enable-d3d12va --enable-ffnvcodec --enable-libvpl --enable-nvdec --enable-nvenc --enable-vaapi --enable-libgme --enable-libopenmpt --enable-libopencore-amrwb --enable-libmp3lame --enable-libtheora --enable-libvo-amrwbenc --enable-libgsm --enable-libopencore-amrnb --enable-libopus --enable-libspeex --enable-libvorbis --enable-librubberband
+  configuration: --enable-gpl --enable-version3 --enable-static --disable-w32threads --disable-autodetect --enable-fontconfig --enable-iconv --enable-gnutls --enable-libxml2 --enable-gmp --enable-bzlib --enable-lzma --enable-zlib --enable-libsrt --enable-libssh --enable-libzmq --enable-avisynth --enable-sdl2 --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxvid --enable-libaom --enable-libopenjpeg --enable-libvpx --enable-mediafoundation --enable-libass --enable-libfreetype --enable-libfribidi --enable-libharfbuzz --enable-libvidstab --enable-libvmaf --enable-libzimg --enable-amf --enable-cuda-llvm --enable-cuvid --enable-dxva2 --enable-d3d11va --enable-d3d12va --enable-ffnvcodec --enable-libvpl --enable-nvdec --enable-nvenc --enable-vaapi --enable-libgme --enable-libopenmpt --enable-libopencore-amrwb --enable-libmp3lame --enable-libtheora --enable-libvo-amrwbenc --enable-libgsm --enable-libopencore-amrnb --enable-libopus --enable-libspeex --enable-libvorbis --enable-librubberband
+  libavutil      59. 39.100 / 59. 39.100
+  libavcodec     61. 19.101 / 61. 19.101
+  libavformat    61.  7.100 / 61.  7.100
+  libavutil      59. 39.100 / 59. 39.100
+  libavdevice    61.  3.100 / 61.  3.100
+  libavcodec     61. 19.101 / 61. 19.101
+  libavfilter    10.  4.100 / 10.  4.100
+  libavformat    61.  7.100 / 61.  7.100
+  libswscale      8.  3.100 /  8.  3.100
+  libavdevice    61.  3.100 / 61.  3.100
+  libswresample   5.  3.100 /  5.  3.100
+  libavfilter    10.  4.100 / 10.  4.100
+  libpostproc    58.  3.100 / 58.  3.100
+  libswscale      8.  3.100 /  8.  3.100
+  libswresample   5.  3.100 /  5.  3.100
+  libpostproc    58.  3.100 / 58.  3.100
+ffmpeg version 7.1.1-essentials_build-www.gyan.dev Copyright (c) 2000-2025 the FFmpeg developers
+  built with gcc 14.2.0 (Rev1, Built by MSYS2 project)
+  configuration: --enable-gpl --enable-version3 --enable-static --disable-w32threads --disable-autodetect --enable-fontconfig --enable-iconv --enable-gnutls --enable-libxml2 --enable-gmp --enable-bzlib --enable-lzma --enable-zlib --enable-libsrt --enable-libssh --enable-libzmq --enable-avisynth --enable-sdl2 --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxvid --enable-libaom --enable-libopenjpeg --enable-libvpx --enable-mediafoundation --enable-libass --enable-libfreetype --enable-libfribidi --enable-libharfbuzz --enable-libvidstab --enable-libvmaf --enable-libzimg --enable-amf --enable-cuda-llvm --enable-cuvid --enable-dxva2 --enable-d3d11va --enable-d3d12va --enable-ffnvcodec --enable-libvpl --enable-nvdec --enable-nvenc --enable-vaapi --enable-libgme --enable-libopenmpt --enable-libopencore-amrwb --enable-libmp3lame --enable-libtheora --enable-libvo-amrwbenc --enable-libgsm --enable-libopencore-amrnb --enable-libopus --enable-libspeex --enable-libvorbis --enable-librubberband
+  libavutil      59. 39.100 / 59. 39.100
+  libavcodec     61. 19.101 / 61. 19.101
+  libavformat    61.  7.100 / 61.  7.100
+  libavdevice    61.  3.100 / 61.  3.100
+  libavfilter    10.  4.100 / 10.  4.100
+  libswscale      8.  3.100 /  8.  3.100
+  libswresample   5.  3.100 /  5.  3.100
+  libpostproc    58.  3.100 / 58.  3.100
+ffmpeg version 7.1.1-essentials_build-www.gyan.dev Copyright (c) 2000-2025 the FFmpeg developers
+  built with gcc 14.2.0 (Rev1, Built by MSYS2 project)
+  configuration: --enable-gpl --enable-version3 --enable-static --disable-w32threads --disable-autodetect --enable-fontconfig --enable-iconv --enable-gnutls --enable-libxml2 --enable-gmp --enable-bzlib --enable-lzma --enable-zlib --enable-libsrt --enable-libssh --enable-libzmq --enable-avisynth --enable-sdl2 --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxvid --enable-libaom --enable-libopenjpeg --enable-libvpx --enable-mediafoundation --enable-libass --enable-libfreetype --enable-libfribidi --enable-libharfbuzz --enable-libvidstab --enable-libvmaf --enable-libzimg --enable-amf --enable-cuda-llvm --enable-cuvid --enable-dxva2 --enable-d3d11va --enable-d3d12va --enable-ffnvcodec --enable-libvpl --enable-nvdec --enable-nvenc --enable-vaapi --enable-libgme --enable-libopenmpt --enable-libopencore-amrwb --enable-libmp3lame --enable-libtheora --enable-libvo-amrwbenc --enable-libgsm --enable-libopencore-amrnb --enable-libopus --enable-libspeex --enable-libvorbis --enable-librubberband
+  libavutil      59. 39.100 / 59. 39.100
+  libavcodec     61. 19.101 / 61. 19.101
+  libavformat    61.  7.100 / 61.  7.100
+  libavdevice    61.  3.100 / 61.  3.100
+  libavfilter    10.  4.100 / 10.  4.100
+  libswscale      8.  3.100 /  8.  3.100
+  libswresample   5.  3.100 /  5.  3.100
+  libpostproc    58.  3.100 / 58.  3.100
+[h264 @ 0000026f26d78280] Error decoding the extradata
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 27646).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 1814).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 1905).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 310).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 2836).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 3709).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Error decoding the extradata
+Invalid NAL unit size (0 > 3610).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 4198).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 5969).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 5224).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 27646).
+Invalid NAL unit size (0 > 4964).
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 1814).
+Invalid NAL unit size (0 > 13393).
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 1905).
+Invalid NAL unit size (0 > 11275).
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 310).
+Invalid NAL unit size (0 > 11370).
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 2836).
+Invalid NAL unit size (0 > 8273).
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 3709).
+Invalid NAL unit size (0 > 9390).
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 3610).
+Invalid NAL unit size (0 > 10529).
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 4198).
+Invalid NAL unit size (0 > 7850).
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 5969).
+Invalid NAL unit size (0 > 13098).
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 5224).
+Invalid NAL unit size (0 > 16090).
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 4964).
+Invalid NAL unit size (0 > 14740).
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 13393).
+Error decoding the extradata
+Invalid NAL unit size (0 > 15859).
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 11275).
+Invalid NAL unit size (0 > 12886).
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 11370).
+Invalid NAL unit size (0 > 14367).
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 8273).
+Invalid NAL unit size (0 > 15535).
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000026f26d78280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 27646).
+Invalid NAL unit size (0 > 9390).
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 17567).
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 1814).
+Invalid NAL unit size (0 > 10529).
+Invalid NAL unit size (0 > 15440).
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 7850).
+Invalid NAL unit size (0 > 1905).
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Invalid NAL unit size (0 > 55701).
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 13098).
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Invalid NAL unit size (0 > 310).
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 41692).
+Error splitting the input into NAL units.
+Invalid NAL unit size (0 > 16090).
+[h264 @ 0000026f26d78280] [h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Invalid NAL unit size (0 > 2836).
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 41662).
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Invalid NAL unit size (0 > 14740).
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 3709).
+Error splitting the input into NAL units.
+Invalid NAL unit size (0 > 17185).
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Invalid NAL unit size (0 > 15859).
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 3610).
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Invalid NAL unit size (0 > 12886).
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 4198).
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Invalid NAL unit size (0 > 14367).
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 5969).
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Invalid NAL unit size (0 > 15535).
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 5224).
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Invalid NAL unit size (0 > 17567).
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 4964).
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Invalid NAL unit size (0 > 15440).
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 13393).
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 55701).
+Invalid NAL unit size (0 > 11275).
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 41692).
+Invalid NAL unit size (0 > 11370).
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 41662).
+Invalid NAL unit size (0 > 8273).
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 17185).
+Invalid NAL unit size (0 > 9390).
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 10529).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 7850).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 13098).
+Error decoding the extradata
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 16090).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 14740).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 15859).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 12886).
+[h264 @ 000002223a618280] [h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+Invalid NAL unit size (0 > 27646).
+[h264 @ 000002223a618280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 14367).
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+Invalid NAL unit size (0 > 1814).
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Invalid NAL unit size (0 > 15535).
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 1905).
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Invalid NAL unit size (0 > 17567).
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 310).
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Invalid NAL unit size (0 > 15440).
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 2836).
+Error splitting the input into NAL units.
+Invalid NAL unit size (0 > 16965).
+[h264 @ 000001705f2a8280] [h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+Invalid NAL unit size (0 > 55701).
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 3709).
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Invalid NAL unit size (0 > 41692).
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 3610).
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Invalid NAL unit size (0 > 41662).
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 4198).
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 17185).
+Invalid NAL unit size (0 > 5969).
+[h264 @ 000002223a618280] [h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 5224).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 4964).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 13393).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 11275).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 11370).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 8273).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 9390).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 10529).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 7850).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 13098).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 16090).
+Invalid NAL unit size (0 > 16965).
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 14740).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 16965).
+Invalid NAL unit size (0 > 15859).
+[h264 @ 0000026f26d78280] [h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 12886).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 14367).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 15535).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 17567).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 15440).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 55701).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 41692).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 41662).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 17185).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 16965).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 11241).
+Invalid NAL unit size (0 > 11241).
+[h264 @ 0000026f26d78280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 11241).
+Invalid NAL unit size (0 > 11241).
+[h264 @ 000001705f2a8280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 14906).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 14906).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 14906).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 16963).
+[h264 @ 0000026f26d78280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 16963).
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 16963).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 44860).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 14906).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 44860).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 16963).
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 47707).
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 44860).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 47707).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 52511).
+Invalid NAL unit size (0 > 44860).
+[h264 @ 000002223a618280] [h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 52511).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 47707).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 37394).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 52511).
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Invalid NAL unit size (0 > 37394).
+[h264 @ 000001705f2a8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 47707).
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 29529).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 52511).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 37394).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 8421).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 29529).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 37394).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 12943).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 8421).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 29529).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 29529).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 14456).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 12943).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 8421).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 14456).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 38588).
+Invalid NAL unit size (0 > 38588).
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 40215).
+Invalid NAL unit size (0 > 40215).
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 12943).
+Invalid NAL unit size (0 > 8421).
+[h264 @ 000001705f2a8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 48081).
+Invalid NAL unit size (0 > 48081).
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 12943).
+Invalid NAL unit size (0 > 14456).
+[h264 @ 0000026f26d78280] [h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 35731).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 0000021005ea8280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 14456).
+Invalid NAL unit size (0 > 35731).
+Invalid NAL unit size (0 > 38588).
+[h264 @ 0000026f26d78280] [h264 @ 0000021005ea8280] [h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 28325).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 38588).
+Invalid NAL unit size (0 > 40215).
+[h264 @ 0000026f26d78280] [h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 10115).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 40215).
+Invalid NAL unit size (0 > 48081).
+[h264 @ 0000026f26d78280] [h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 28325).
+Invalid NAL unit size (0 > 12846).
+Invalid NAL unit size (0 > 48081).
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 10115).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 35731).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 3267).
+Invalid NAL unit size (0 > 35731).
+[h264 @ 000002223a618280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 28325).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 28325).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 10115).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 12846).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 12846).
+Invalid NAL unit size (0 > 11777).
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 3267).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 10115).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 3267).
+Invalid NAL unit size (0 > 14586).
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 12846).
+Invalid NAL unit size (0 > 11777).
+[h264 @ 0000026f26d78280] [h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 11777).
+Invalid NAL unit size (0 > 33712).
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 3267).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 000002223a618280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 37421).
+Invalid NAL unit size (0 > 14586).
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 11777).
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+Invalid NAL unit size (0 > 14586).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 14586).
+Invalid NAL unit size (0 > 33712).
+[h264 @ 0000026f26d78280] [h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 37421).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 33712).
+Invalid NAL unit size (0 > 41979).
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 33712).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 41979).
+Invalid NAL unit size (0 > 32089).
+Invalid NAL unit size (0 > 37421).
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 37421).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 29468).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 41979).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 32089).
+Invalid NAL unit size (0 > 41979).
+[h264 @ 000001705f2a8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 32089).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 29468).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 9222).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 9222).
+Invalid NAL unit size (0 > 32089).
+[h264 @ 000001705f2a8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 29468).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 29468).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 9222).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 8893).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 8893).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 10313).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 9222).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 8893).
+Invalid NAL unit size (0 > 10313).
+[h264 @ 0000026f26d78280] [h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 10313).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 14010).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 8893).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 14010).
+Invalid NAL unit size (0 > 4443).
+[h264 @ 000002223a618280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 10313).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 37438).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 14010).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 4443).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 37438).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 4443).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 43891).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 43891).
+Invalid NAL unit size (0 > 14010).
+[h264 @ 000001705f2a8280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 37438).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 44070).
+[h264 @ 000001705f2a8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Invalid NAL unit size (0 > 44070).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 4443).
+Invalid NAL unit size (0 > 43891).
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 37211).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 37211).
+Invalid NAL unit size (0 > 33311).
+[h264 @ 0000026f26d78280] [h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 44070).
+Invalid NAL unit size (0 > 37438).
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 33311).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 37211).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 14120).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 33311).
+Invalid NAL unit size (0 > 43891).
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 16316).
+Invalid NAL unit size (0 > 14120).
+[h264 @ 000001705f2a8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 44070).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 14026).
+Invalid NAL unit size (0 > 14120).
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 16316).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 16316).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 14859).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 37211).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 14295).
+Invalid NAL unit size (0 > 33311).
+[h264 @ 000001705f2a8280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 14026).
+Invalid NAL unit size (0 > 14026).
+[h264 @ 000002223a618280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 35714).
+Invalid NAL unit size (0 > 14120).
+[h264 @ 000001705f2a8280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 14859).
+Invalid NAL unit size (0 > 14859).
+[h264 @ 000002223a618280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 14295).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 35375).
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 16316).
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 14295).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 35714).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 41725).
+Invalid NAL unit size (0 > 14026).
+Invalid NAL unit size (0 > 35714).
+[h264 @ 000001705f2a8280] [h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 31910).
+[h264 @ 0000026f26d78280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 35375).
+Invalid NAL unit size (0 > 14859).
+Invalid NAL unit size (0 > 35375).
+[h264 @ 000002223a618280] [h264 @ 000001705f2a8280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 14295).
+Invalid NAL unit size (0 > 17098).
+[h264 @ 0000021005ea8280] [h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 41725).
+Invalid NAL unit size (0 > 41725).
+[h264 @ 0000026f26d78280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 31910).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 35714).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 16263).
+Invalid NAL unit size (0 > 31910).
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 35375).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 17098).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 15607).
+Invalid NAL unit size (0 > 16263).
+[h264 @ 000001705f2a8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 41725).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 17098).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 15979).
+Invalid NAL unit size (0 > 15607).
+[h264 @ 000001705f2a8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 16263).
+Invalid NAL unit size (0 > 31910).
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 15979).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 19711).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 17098).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 19711).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 15607).
+Invalid NAL unit size (0 > 20152).
+[h264 @ 000002223a618280] [h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 16263).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 15607).
+Invalid NAL unit size (0 > 20152).
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 15979).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 20278).
+[h264 @ 0000026f26d78280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 20278).
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 19711).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 17634).
+Invalid NAL unit size (0 > 15979).
+[h264 @ 0000026f26d78280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 17634).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 19711).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 20152).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 20830).
+[h264 @ 0000021005ea8280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 20152).
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 20830).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 19282).
+Invalid NAL unit size (0 > 20278).
+[h264 @ 0000026f26d78280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 19282).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 20278).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 17634).
+Invalid NAL unit size (0 > 43326).
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 43326).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 17634).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 20830).
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 18639).
+Invalid NAL unit size (0 > 18639).
+[h264 @ 000001705f2a8280] [h264 @ 0000026f26d78280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 20830).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 22165).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 22165).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 19282).
+Invalid NAL unit size (0 > 19282).
+Invalid NAL unit size (0 > 22137).
+[h264 @ 0000021005ea8280] [h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 22137).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 21075).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 22178).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 43326).
+Invalid NAL unit size (0 > 21075).
+Invalid NAL unit size (0 > 43326).
+[h264 @ 0000021005ea8280] [h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 22564).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 18639).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 22178).
+Invalid NAL unit size (0 > 22165).
+Invalid NAL unit size (0 > 19375).
+[h264 @ 000001705f2a8280] [h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+Invalid NAL unit size (0 > 18639).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 20444).
+[h264 @ 000001705f2a8280] [h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 22564).
+Invalid NAL unit size (0 > 22137).
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 22165).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 19375).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000026f26d78280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 22137).
+Invalid NAL unit size (0 > 17358).
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 21075).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 20444).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 22058).
+Invalid NAL unit size (0 > 22178).
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 21075).
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 17358).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 23184).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 22058).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 21084).
+Invalid NAL unit size (0 > 22564).
+[h264 @ 0000026f26d78280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+Invalid NAL unit size (0 > 22178).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 23184).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 19375).
+Invalid NAL unit size (0 > 22564).
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 21084).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 20240).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 20444).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 20240).
+Invalid NAL unit size (0 > 19375).
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 22141).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 20444).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 22141).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 17358).
+[h264 @ 000001705f2a8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 17548).
+[h264 @ 0000021005ea8280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 17548).
+Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 17358).
+Invalid NAL unit size (0 > 18236).
+[h264 @ 000002223a618280] [h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 18236).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 15452).
+Invalid NAL unit size (0 > 22058).
+[h264 @ 000001705f2a8280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 15452).
+Invalid NAL unit size (0 > 22058).
+[h264 @ 0000026f26d78280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 23184).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 23184).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 17407).
+Invalid NAL unit size (0 > 17407).
+[h264 @ 0000026f26d78280] [h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 21084).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 16682).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 19142).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 19426).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 21084).
+Invalid NAL unit size (0 > 16682).
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 20240).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 19142).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 20240).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 7467).
+Invalid NAL unit size (0 > 22141).
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 22141).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 19379).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 17548).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 19426).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 7467).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 49345).
+Invalid NAL unit size (0 > 18236).
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 17548).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 18236).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 19379).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 15452).
+Invalid NAL unit size (0 > 46353).
+Invalid NAL unit size (0 > 15452).
+[h264 @ 0000021005ea8280] [h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 17407).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 49345).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 17407).
+Invalid NAL unit size (0 > 45612).
+[h264 @ 000002223a618280] [h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 35817).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 46353).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 16682).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 19142).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 16682).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 17660).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 19142).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 19426).
+[h264 @ 0000026f26d78280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 45612).
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 14823).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 7467).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 16532).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 19426).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 35817).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 17660).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 14373).
+Invalid NAL unit size (0 > 19379).
+Invalid NAL unit size (0 > 7467).
+[h264 @ 000001705f2a8280] [h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 14823).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 49345).
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 15695).
+Invalid NAL unit size (0 > 19379).
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 16532).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 46353).
+Invalid NAL unit size (0 > 83455).
+[h264 @ 0000021005ea8280] [h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 14373).
+Invalid NAL unit size (0 > 49345).
+[h264 @ 0000026f26d78280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 45612).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 19091).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 35817).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 15695).
+Invalid NAL unit size (0 > 46353).
+[h264 @ 0000026f26d78280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 83455).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 7951).
+Invalid NAL unit size (0 > 45612).
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 19091).
+Invalid NAL unit size (0 > 17660).
+Invalid NAL unit size (0 > 35817).
+[h264 @ 0000026f26d78280] [h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 14010).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 7951).
+Invalid NAL unit size (0 > 14823).
+[h264 @ 0000026f26d78280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 14736).
+Invalid NAL unit size (0 > 17660).
+[h264 @ 000001705f2a8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 14823).
+Invalid NAL unit size (0 > 16893).
+[h264 @ 000002223a618280] [h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 14010).
+Invalid NAL unit size (0 > 16532).
+[h264 @ 0000026f26d78280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 14736).
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 14373).
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 16532).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 16893).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 49332).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 15695).
+Invalid NAL unit size (0 > 14373).
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 41847).
+[h264 @ 0000026f26d78280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 49332).
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 38883).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 6934).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 15695).
+Invalid NAL unit size (0 > 83455).
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 14620).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 19091).
+Invalid NAL unit size (0 > 83455).
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 18129).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 19091).
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 7951).
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 41847).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 17080).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 7951).
+Invalid NAL unit size (0 > 38883).
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 14010).
+Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 14736).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 14010).
+Invalid NAL unit size (0 > 16611).
+[h264 @ 000002223a618280] [h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 6934).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 000001705f2a8280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 14736).
+Invalid NAL unit size (0 > 16893).
+Invalid NAL unit size (0 > 14824).
+[h264 @ 000002223a618280] [h264 @ 000001705f2a8280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 16893).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 49332).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 6611).
+Invalid NAL unit size (0 > 14620).
+[h264 @ 000001705f2a8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 41847).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 49332).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 15953).
+Invalid NAL unit size (0 > 18129).
+[h264 @ 000001705f2a8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 38883).
+Invalid NAL unit size (0 > 41847).
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 17080).
+Invalid NAL unit size (0 > 17335).
+[h264 @ 0000026f26d78280] [h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 38883).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 6934).
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 16611).
+Invalid NAL unit size (0 > 43504).
+[h264 @ 000002223a618280] [h264 @ 0000026f26d78280] [h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 14620).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 18129).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 6934).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 14824).
+Invalid NAL unit size (0 > 48062).
+[h264 @ 0000026f26d78280] [h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 6611).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 17080).
+Invalid NAL unit size (0 > 14620).
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 34183).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 16611).
+Invalid NAL unit size (0 > 18129).
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 14824).
+Invalid NAL unit size (0 > 17080).
+[h264 @ 000002223a618280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 15953).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 16708).
+Invalid NAL unit size (0 > 16611).
+[h264 @ 000001705f2a8280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 6611).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 15524).
+Invalid NAL unit size (0 > 14824).
+[h264 @ 000001705f2a8280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 6611).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 17335).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 000001705f2a8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 15953).
+Invalid NAL unit size (0 > 14748).
+Invalid NAL unit size (0 > 43504).
+[h264 @ 0000021005ea8280] [h264 @ 000001705f2a8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 15953).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 17335).
+Invalid NAL unit size (0 > 48062).
+[h264 @ 0000021005ea8280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 16526).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 17335).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 34183).
+Invalid NAL unit size (0 > 43504).
+[h264 @ 0000026f26d78280] [h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 48062).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 16258).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 16708).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 34183).
+Invalid NAL unit size (0 > 43504).
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 2187).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 16708).
+Invalid NAL unit size (0 > 48062).
+[h264 @ 0000021005ea8280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 1186).
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 34183).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 15524).
+[h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 15524).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 000001705f2a8280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 16708).
+Invalid NAL unit size (0 > 13941).
+Invalid NAL unit size (0 > 14748).
+[h264 @ 000002223a618280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 16526).
+Invalid NAL unit size (0 > 15524).
+[h264 @ 0000026f26d78280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 14748).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 000002223a618280] [h264 @ 000001705f2a8280] Invalid NAL unit size (0 > 16258).
+Invalid NAL unit size (0 > 14748).
+[h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 39834).
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 000001705f2a8280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 16526).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 2187).
+[mov,mp4,m4a,3gp,3g2,mj2 @ 000001705f290b40] Invalid NAL unit size (0 > 16526).
+[h264 @ 0000026f26d78280] Could not find codec parameters for stream 0 (Video: h264 (hvc1 / 0x31637668), none(tv, bt709), 720x720, 4798 kb/s): unspecified pixel format
+Consider increasing the value for the 'analyzeduration' (0) and 'probesize' (5000000) options
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'http://localhost:9000/pending/pending/759ebfcc732b4c9ea2ea322ca3fe63ff.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=rtx_venom128%2F20250820%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250820T150920Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=0d16baf0616f7ce85cea663eff6433cffe0e7f8e104211e4d9feb11f0d5399eb':
+  Metadata:
+    major_brand     : isom
+    minor_version   : 131072
+    compatible_brands: isomiso2mp41
+    creation_time   : 2025-08-19T14:56:29.000000Z
+  Duration: 00:00:20.58, start: 0.000000, bitrate: 5054 kb/s
+  Stream #0:0[0x1](eng): Video: h264 (hvc1 / 0x31637668), none(tv, bt709), 720x720, 4798 kb/s, SAR 1:1 DAR 1:1, [h264 @ 0000021005ea8280] 30 fps, 30 tbr, Invalid NAL unit size (0 > 16258).
+90k tbn[h264 @ 0000021005ea8280]  (default)Error splitting the input into NAL units.
+
+      Metadata:
+        creation_time   : 2025-08-19T14:56:29.000000Z
+        handler_name    : VideoHandle
+        vendor_id       : [0][0][0][0]
+  Stream #0:1[0x2](eng): Audio: aac (LC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 127 kb/s (default)
+      Metadata:
+        creation_time   : 2025-08-19T14:56:29.000000Z
+        handler_name    : SoundHandle
+        vendor_id       : [0][0][0][0]
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 2187).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 0000026f26d78280] [h264 @ 000002223a618280] Invalid NAL unit size (0 > 1186).
+Invalid NAL unit size (0 > 16258).
+[h264 @ 0000026f26d78280] [h264 @ 000002223a618280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 2187).
+Invalid NAL unit size (0 > 13941).
+[h264 @ 000002223a618280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 1186).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] [h264 @ 0000026f26d78280] Invalid NAL unit size (0 > 1186).
+Invalid NAL unit size (0 > 39834).
+[h264 @ 000002223a618280] [h264 @ 0000026f26d78280] Error splitting the input into NAL units.
+Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 13941).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 13941).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000026f26d60b40] Could not find codec parameters for stream 0 (Video: h264 (hvc1 / 0x31637668), none(tv, bt709), 720x720, 4798 kb/s): unspecified pixel format
+Consider increasing the value for the 'analyzeduration' (0) and 'probesize' (5000000) options
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'http://localhost:9000/pending/pending/759ebfcc732b4c9ea2ea322ca3fe63ff.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=rtx_venom128%2F20250820%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250820T150920Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=0d16baf0616f7ce85cea663eff6433cffe0e7f8e104211e4d9feb11f0d5399eb':
+  Metadata:
+    major_brand     : isom
+    minor_version   : 131072
+    compatible_brands: isomiso2mp41
+    creation_time   : 2025-08-19T14:56:29.000000Z
+  Duration: 00:00:20.58, start: 0.000000, bitrate: 5054 kb/s
+  Stream #0:0[0x1](eng): Video: h264 (hvc1 / 0x31637668), none(tv, bt709), 720x720, 4798 kb/s, SAR 1:1 DAR 1:1, 30 fps, 30 tbr, 90k tbn (default)
+      Metadata:
+        creation_time   : 2025-08-19T14:56:29.000000Z
+        handler_name    : VideoHandle
+        vendor_id       : [0][0][0][0]
+  Stream #0:1[0x2](eng): Audio: aac (LC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 127 kb/s (default)
+      Metadata:
+        creation_time   : 2025-08-19T14:56:29.000000Z
+        handler_name    : SoundHandle
+        vendor_id       : [0][0][0][0]
+[h264 @ 000002223a618280] Invalid NAL unit size (0 > 39834).
+[h264 @ 000002223a618280] Error splitting the input into NAL units.
+[h264 @ 0000021005ea8280] Invalid NAL unit size (0 > 39834).
+[h264 @ 0000021005ea8280] Error splitting the input into NAL units.
+[h264_mp4toannexb @ 000001705f275780] Global extradata truncated, corrupted stream or invalid MP4/AVCC bitstream
+[vist#0:0/h264 @ 000001705f290fc0] [dec:h264_cuvid @ 000001705f29d140] Error while opening decoder: Invalid data found when processing input
+Error opening output file C:\Users\rohit\AppData\Local\Temp\tmpiiwaqqgi\1080p\playlist.m3u8.
+Error opening output files: Invalid data found when processing input
+[mov,mp4,m4a,3gp,3g2,mj2 @ 000002223a600b40] [mov,mp4,m4a,3gp,3g2,mj2 @ 0000021005e90b40] Could not find codec parameters for stream 0 (Video: h264 (hvc1 / 0x31637668), none(tv, bt709), 720x720, 4798 kb/s): unspecified pixel format
+Consider increasing the value for the 'analyzeduration' (0) and 'probesize' (5000000) options
+Could not find codec parameters for stream 0 (Video: h264 (hvc1 / 0x31637668), none(tv, bt709), 720x720, 4798 kb/s): unspecified pixel format
+Consider increasing the value for the 'analyzeduration' (0) and 'probesize' (5000000) options
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'http://localhost:9000/pending/pending/759ebfcc732b4c9ea2ea322ca3fe63ff.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=rtx_venom128%2F20250820%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250820T150920Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=0d16baf0616f7ce85cea663eff6433cffe0e7f8e104211e4d9feb11f0d5399eb':
+  Metadata:
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'http://localhost:9000/pending/pending/759ebfcc732b4c9ea2ea322ca3fe63ff.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=rtx_venom128%2F20250820%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250820T150920Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=0d16baf0616f7ce85cea663eff6433cffe0e7f8e104211e4d9feb11f0d5399eb':
+    major_brand     :   Metadata:
+isom
+    major_brand     :     minor_version   : isom
+    minor_version   : 131072
+    compatible_brands: 131072
+    compatible_brands: isomiso2mp41isomiso2mp41
+
+    creation_time   : 2025-08-19T14:56:29.000000Z
+  Duration: 00:00:20.58    creation_time   : , start: 0.000000, bitrate: 5054 kb/s2025-08-19T14:56:29.000000Z
+
+  Stream #0  Duration: 00:00:20.58, start: :00.000000, bitrate: 5054 kb/s
+[0x1]  Stream #0:0(eng): Video: h264 (hvc1 / 0x31637668), none(tv, bt709), 720x720, 4798 kb/s[0x1], SAR 1:1 DAR 1:1(eng), : Video: h264 (hvc1 / 0x31637668), none(tv, bt709), 720x720, 4798 kb/s30 fps, , SAR 1:1 DAR 1:1, 30 tbr, 30 fps, 90k tbn (default)
+30 tbr, 90k tbn (default)
+      Metadata:
+        creation_time   : 2025-08-19T14:56:29.000000Z
+        handler_name    : VideoHandle
+      Metadata:
+        vendor_id       : [0][0][0][0]
+        creation_time   :   Stream #02025-08-19T14:56:29.000000Z:1
+        handler_name    : [0x2]VideoHandle(eng): Audio: aac (LC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 127 kb/s
+ (default)
+        vendor_id       :       Metadata:
+        creation_time   : [0][0][0][0]
+2025-08-19T14:56:29.000000Z  Stream #0
+:1        handler_name    : [0x2]SoundHandle(eng)
+        vendor_id       : [0][0][0][0]: Audio: aac (LC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 127 kb/s (default)
+      Metadata:
+
+        creation_time   : 2025-08-19T14:56:29.000000Z
+        handler_name    : SoundHandle
+        vendor_id       : [0][0][0][0]
+[h264_mp4toannexb @ 0000026f26d47800] Global extradata truncated, corrupted stream or invalid MP4/AVCC bitstream
+[vist#0:0/h264 @ 0000026f26d60fc0] [dec:h264_cuvid @ 0000026f26d6d140] Error while opening decoder: Invalid data found when processing input
+Error opening output file C:\Users\rohit\AppData\Local\Temp\tmpiiwaqqgi\360p\playlist.m3u8.
+Error opening output files: Invalid data found when processing input
+[h264_mp4toannexb @ 0000021005e76cc0] Global extradata truncated, corrupted stream or invalid MP4/AVCC bitstream
+[vist#0:0/h264 @ 0000021005e90fc0] [dec:h264_cuvid @ 0000021005e9d140] Error while opening decoder: Invalid data found when processing input
+Error opening output file C:\Users\rohit\AppData\Local\Temp\tmpiiwaqqgi\720p\playlist.m3u8.
+Error opening output files: Invalid data found when processing input
+[h264_mp4toannexb @ 000002223a5e5440] Global extradata truncated, corrupted stream or invalid MP4/AVCC bitstream
+[vist#0:0/h264 @ 000002223a600fc0] [dec:h264_cuvid @ 000002223a60d140] Error while opening decoder: Invalid data found when processing input
+Error opening output file C:\Users\rohit\AppData\Local\Temp\tmpiiwaqqgi\480p\playlist.m3u8.
+Error opening output files: Invalid data found when processing input
+[2025-08-20 20:39:24,117: WARNING/MainProcess] Error processing 759ebfcc732b4c9ea2ea322ca3fe63ff: Command '['ffmpeg', '-c:v', 'h264_cuvid', '-i', 'http://localhost:9000/pending/pending/759ebfcc732b4c9ea2ea322ca3fe63ff.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=rtx_venom128%2F20250820%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250820T150920Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=0d16baf0616f7ce85cea663eff6433cffe0e7f8e104211e4d9feb11f0d5399eb', '-vf', 'hwupload_cuda,scale_cuda=-2:360', '-c:v', 'h264_nvenc', '-preset', 'p5', '-cq', '24', '-c:a', 'aac', '-b:a', '128k', '-f', 'hls', '-hls_time', '6', '-hls_playlist_type', 'vod', '-hls_segment_filename', 'C:\\Users\\rohit\\AppData\\Local\\Temp\\tmpiiwaqqgi\\360p/seg_%03d.ts', 'C:\\Users\\rohit\\AppData\\Local\\Temp\\tmpiiwaqqgi\\360p\\playlist.m3u8']' returned non-zero exit status 3199971767.
+[2025-08-20 20:39:24,135: WARNING/MainProcess] Worker cleaned up s3://pending/pending/759ebfcc732b4c9ea2ea322ca3fe63ff.mp4
+[2025-08-20 20:39:24,190: WARNING/MainProcess] C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\app\trace.py:662: RuntimeWarning: Exception raised outside body: ValueError('Exception information must include the exception type'):
+Traceback (most recent call last):
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\app\trace.py", line 453, in trace_task
+    R = retval = fun(*args, **kwargs)
+                 ~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\app\trace.py", line 736, in __protected_call__
+    return self.run(*args, **kwargs)
+           ~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\rohit\OneDrive\Desktop\flask_fastapi_projs\Adaptive_streaming_application_fastpi_minio\worker_application_1\app\tasks.py", line 72, in process_video_from_s3
+    out_dirs = list(exe.map(transcode, variants))
+  File "C:\Python313\Lib\concurrent\futures\_base.py", line 619, in result_iterator
+    yield _result_or_cancel(fs.pop())
+          ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "C:\Python313\Lib\concurrent\futures\_base.py", line 317, in _result_or_cancel
+    return fut.result(timeout)
+           ~~~~~~~~~~^^^^^^^^^
+  File "C:\Python313\Lib\concurrent\futures\_base.py", line 456, in result
+    return self.__get_result()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Python313\Lib\concurrent\futures\_base.py", line 401, in __get_result
+    raise self._exception
+  File "C:\Python313\Lib\concurrent\futures\thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "C:\Users\rohit\OneDrive\Desktop\flask_fastapi_projs\Adaptive_streaming_application_fastpi_minio\worker_application_1\app\tasks.py", line 68, in transcode
+    subprocess.run(cmd, check=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\subprocess.py", line 577, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['ffmpeg', '-c:v', 'h264_cuvid', '-i', 'http://localhost:9000/pending/pending/759ebfcc732b4c9ea2ea322ca3fe63ff.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=rtx_venom128%2F20250820%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250820T150920Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=0d16baf0616f7ce85cea663eff6433cffe0e7f8e104211e4d9feb11f0d5399eb', '-vf', 'hwupload_cuda,scale_cuda=-2:360', '-c:v', 'h264_nvenc', '-preset', 'p5', '-cq', '24', '-c:a', 'aac', '-b:a', '128k', '-f', 'hls', '-hls_time', '6', '-hls_playlist_type', 'vod', '-hls_segment_filename', 'C:\\Users\\rohit\\AppData\\Local\\Temp\\tmpiiwaqqgi\\360p/seg_%03d.ts', 'C:\\Users\\rohit\\AppData\\Local\\Temp\\tmpiiwaqqgi\\360p\\playlist.m3u8']' returned non-zero exit status 3199971767.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\backends\base.py", line 354, in exception_to_python
+    exc_type = exc['exc_type']
+               ~~~^^^^^^^^^^^^
+KeyError: 'exc_type'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\app\trace.py", line 470, in trace_task
+    I, R, state, retval = on_error(task_request, exc)
+                          ~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\app\trace.py", line 381, in on_error
+    R = I.handle_error_state(
+        task, request, eager=eager, call_errbacks=call_errbacks,
+    )
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\app\trace.py", line 175, in handle_error_state
+    return {
+           ~
+        RETRY: self.handle_retry,
+        ~~~~~~~~~~~~~~~~~~~~~~~~~
+        FAILURE: self.handle_failure,
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    }[self.state](task, req,
+    ~~~~~~~~~~~~~^^^^^^^^^^^
+                  store_errors=store_errors,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^
+                  call_errbacks=call_errbacks)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\app\trace.py", line 227, in handle_failure
+    task.backend.mark_as_failure(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        req.id, exc, einfo.traceback,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        request=req, store_result=store_errors,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        call_errbacks=call_errbacks,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\backends\base.py", line 167, in mark_as_failure
+    self.store_result(task_id, exc, state,
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+                      traceback=traceback, request=request)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\backends\base.py", line 526, in store_result
+    self._store_result(task_id, result, state, traceback,
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                       request=request, **kwargs)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\backends\base.py", line 975, in _store_result
+    current_meta = self._get_task_meta_for(task_id)
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\backends\base.py", line 1000, in _get_task_meta_for
+    return self.decode_result(meta)
+           ~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\backends\base.py", line 425, in decode_result
+    return self.meta_from_decoded(self.decode(payload))
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\backends\base.py", line 421, in meta_from_decoded
+    meta['result'] = self.exception_to_python(meta['result'])
+                     ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\backends\base.py", line 356, in exception_to_python
+    raise ValueError("Exception information must include "
+                     "the exception type") from e
+ValueError: Exception information must include the exception type
+
+  warn(RuntimeWarning(
+
+[2025-08-20 20:39:24,195: CRITICAL/MainProcess] Unrecoverable error: ValueError('Exception information must include the exception type')
+Traceback (most recent call last):
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\app\trace.py", line 453, in trace_task
+    R = retval = fun(*args, **kwargs)
+                 ~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\app\trace.py", line 736, in __protected_call__
+    return self.run(*args, **kwargs)
+           ~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\rohit\OneDrive\Desktop\flask_fastapi_projs\Adaptive_streaming_application_fastpi_minio\worker_application_1\app\tasks.py", line 72, in process_video_from_s3
+    out_dirs = list(exe.map(transcode, variants))
+  File "C:\Python313\Lib\concurrent\futures\_base.py", line 619, in result_iterator
+    yield _result_or_cancel(fs.pop())
+          ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "C:\Python313\Lib\concurrent\futures\_base.py", line 317, in _result_or_cancel
+    return fut.result(timeout)
+           ~~~~~~~~~~^^^^^^^^^
+  File "C:\Python313\Lib\concurrent\futures\_base.py", line 456, in result
+    return self.__get_result()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Python313\Lib\concurrent\futures\_base.py", line 401, in __get_result
+    raise self._exception
+  File "C:\Python313\Lib\concurrent\futures\thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "C:\Users\rohit\OneDrive\Desktop\flask_fastapi_projs\Adaptive_streaming_application_fastpi_minio\worker_application_1\app\tasks.py", line 68, in transcode
+    subprocess.run(cmd, check=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\subprocess.py", line 577, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['ffmpeg', '-c:v', 'h264_cuvid', '-i', 'http://localhost:9000/pending/pending/759ebfcc732b4c9ea2ea322ca3fe63ff.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=rtx_venom128%2F20250820%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250820T150920Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=0d16baf0616f7ce85cea663eff6433cffe0e7f8e104211e4d9feb11f0d5399eb', '-vf', 'hwupload_cuda,scale_cuda=-2:360', '-c:v', 'h264_nvenc', '-preset', 'p5', '-cq', '24', '-c:a', 'aac', '-b:a', '128k', '-f', 'hls', '-hls_time', '6', '-hls_playlist_type', 'vod', '-hls_segment_filename', 'C:\\Users\\rohit\\AppData\\Local\\Temp\\tmpiiwaqqgi\\360p/seg_%03d.ts', 'C:\\Users\\rohit\\AppData\\Local\\Temp\\tmpiiwaqqgi\\360p\\playlist.m3u8']' returned non-zero exit status 3199971767.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\backends\base.py", line 354, in exception_to_python
+    exc_type = exc['exc_type']
+               ~~~^^^^^^^^^^^^
+KeyError: 'exc_type'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\app\trace.py", line 470, in trace_task
+    I, R, state, retval = on_error(task_request, exc)
+                          ~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\app\trace.py", line 381, in on_error
+    R = I.handle_error_state(
+        task, request, eager=eager, call_errbacks=call_errbacks,
+    )
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\app\trace.py", line 175, in handle_error_state
+    return {
+           ~
+        RETRY: self.handle_retry,
+        ~~~~~~~~~~~~~~~~~~~~~~~~~
+        FAILURE: self.handle_failure,
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    }[self.state](task, req,
+    ~~~~~~~~~~~~~^^^^^^^^^^^
+                  store_errors=store_errors,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^
+                  call_errbacks=call_errbacks)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\app\trace.py", line 227, in handle_failure
+    task.backend.mark_as_failure(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        req.id, exc, einfo.traceback,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        request=req, store_result=store_errors,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        call_errbacks=call_errbacks,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\backends\base.py", line 167, in mark_as_failure
+    self.store_result(task_id, exc, state,
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+                      traceback=traceback, request=request)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\backends\base.py", line 526, in store_result
+    self._store_result(task_id, result, state, traceback,
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                       request=request, **kwargs)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\backends\base.py", line 975, in _store_result
+    current_meta = self._get_task_meta_for(task_id)
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\backends\base.py", line 1000, in _get_task_meta_for
+    return self.decode_result(meta)
+           ~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\backends\base.py", line 425, in decode_result
+    return self.meta_from_decoded(self.decode(payload))
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\backends\base.py", line 421, in meta_from_decoded
+    meta['result'] = self.exception_to_python(meta['result'])
+                     ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\backends\base.py", line 356, in exception_to_python
+    raise ValueError("Exception information must include "
+                     "the exception type") from e
+ValueError: Exception information must include the exception type
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\backends\base.py", line 354, in exception_to_python
+    exc_type = exc['exc_type']
+               ~~~^^^^^^^^^^^^
+KeyError: 'exc_type'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\worker\worker.py", line 203, in start
+    self.blueprint.start(self)
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\bootsteps.py", line 116, in start
+    step.start(parent)
+    ~~~~~~~~~~^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\bootsteps.py", line 365, in start
+    return self.obj.start()
+           ~~~~~~~~~~~~~~^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\worker\consumer\consumer.py", line 341, in start
+    blueprint.start(self)
+    ~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\bootsteps.py", line 116, in start
+    step.start(parent)
+    ~~~~~~~~~~^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\worker\consumer\consumer.py", line 772, in start
+    c.loop(*c.loop_args())
+    ~~~~~~^^^^^^^^^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\worker\loops.py", line 143, in synloop
+    _loop_cycle()
+    ~~~~~~~~~~~^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\worker\loops.py", line 132, in _loop_cycle
+    connection.drain_events(timeout=2.0)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\kombu\connection.py", line 341, in drain_events
+    return self.transport.drain_events(self.connection, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\kombu\transport\virtual\base.py", line 997, in drain_events
+    get(self._deliver, timeout=timeout)
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\kombu\transport\redis.py", line 598, in get
+    ret = self.handle_event(fileno, event)
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\kombu\transport\redis.py", line 580, in handle_event
+    return self.on_readable(fileno), self
+           ~~~~~~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\kombu\transport\redis.py", line 576, in on_readable
+    chan.handlers[type]()
+    ~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\kombu\transport\redis.py", line 986, in _brpop_read
+    self.connection._deliver(loads(bytes_to_str(item)), dest)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\kombu\transport\virtual\base.py", line 1017, in _deliver
+    callback(message)
+    ~~~~~~~~^^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\kombu\transport\virtual\base.py", line 639, in _callback
+    return callback(message)
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\kombu\messaging.py", line 668, in _receive_callback
+    return on_m(message) if on_m else self.receive(decoded, message)
+           ~~~~^^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\worker\consumer\consumer.py", line 688, in on_task_received
+    strategy(
+    ~~~~~~~~^
+        message, payload,
+        ^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        callbacks,
+        ^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\worker\strategy.py", line 207, in task_message_handler
+    handle(req)
+    ~~~~~~^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\worker\worker.py", line 226, in _process_task
+    req.execute_using_pool(self.pool)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\worker\request.py", line 754, in execute_using_pool
+    result = apply_async(
+        trace,
+    ...<8 lines>...
+        correlation_id=task_id,
+    )
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\concurrency\base.py", line 153, in apply_async
+    return self.on_apply(target, args, kwargs,
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+                         waitforslot=self.putlocks,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         callbacks_propagate=self.callbacks_propagate,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         **options)
+                         ^^^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\concurrency\base.py", line 30, in apply_target
+    ret = target(*args, **kwargs)
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\app\trace.py", line 651, in fast_trace_task
+    R, I, T, Rstr = tasks[task].__trace__(
+                    ~~~~~~~~~~~~~~~~~~~~~^
+        uuid, args, kwargs, request,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\app\trace.py", line 574, in trace_task
+    I, _, _, _ = on_error(task_request, exc)
+                 ~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\app\trace.py", line 381, in on_error
+    R = I.handle_error_state(
+        task, request, eager=eager, call_errbacks=call_errbacks,
+    )
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\app\trace.py", line 175, in handle_error_state
+    return {
+           ~
+        RETRY: self.handle_retry,
+        ~~~~~~~~~~~~~~~~~~~~~~~~~
+        FAILURE: self.handle_failure,
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    }[self.state](task, req,
+    ~~~~~~~~~~~~~^^^^^^^^^^^
+                  store_errors=store_errors,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^
+                  call_errbacks=call_errbacks)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\app\trace.py", line 227, in handle_failure
+    task.backend.mark_as_failure(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        req.id, exc, einfo.traceback,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        request=req, store_result=store_errors,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        call_errbacks=call_errbacks,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\backends\base.py", line 167, in mark_as_failure
+    self.store_result(task_id, exc, state,
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+                      traceback=traceback, request=request)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\backends\base.py", line 526, in store_result
+    self._store_result(task_id, result, state, traceback,
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                       request=request, **kwargs)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\backends\base.py", line 975, in _store_result
+    current_meta = self._get_task_meta_for(task_id)
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\backends\base.py", line 1000, in _get_task_meta_for
+    return self.decode_result(meta)
+           ~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\backends\base.py", line 425, in decode_result
+    return self.meta_from_decoded(self.decode(payload))
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\backends\base.py", line 421, in meta_from_decoded
+    meta['result'] = self.exception_to_python(meta['result'])
+                     ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "C:\Users\rohit\AppData\Roaming\Python\Python313\site-packages\celery\backends\base.py", line 356, in exception_to_python
+    raise ValueError("Exception information must include "
+                     "the exception type") from e
+ValueError: Exception information must include the exception type

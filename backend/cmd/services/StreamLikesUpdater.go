@@ -320,11 +320,25 @@ func (w *StreamLikesWorker) processBatch(ctx context.Context, workerID int, batc
 	// Update the Redis Cache
 	if len(updateIDs) > 0 {
 		pipe := w.redis.Client.Pipeline()
+
+		// LUA SCRIPT: Only increment if the specific field already exists.
+		// This mathematically guarantees we never initialize an expired cache to a low number.
+		luaScript := `
+			if redis.call("HEXISTS", KEYS[1], ARGV[1]) == 1 then
+				return redis.call("HINCRBY", KEYS[1], ARGV[1], ARGV[2])
+			end
+			return 0
+		`
+
 		for i, vid := range updateIDs {
 			counterKey := fmt.Sprintf("vid:%s:stats", vid)
-			pipe.HIncrBy(ctx, counterKey, "likes", updateCounts[i])
+			// Pass the script, the key (KEYS[1]), the field (ARGV[1]), and the delta (ARGV[2])
+			pipe.Eval(ctx, luaScript, []string{counterKey}, "likes", updateCounts[i])
 		}
-		_, _ = pipe.Exec(ctx)
+		_, err := pipe.Exec(ctx)
+		if err != nil && err != redis.Nil {
+			log.Printf("Worker %d: Non-fatal error updating redis cache: %v", workerID, err)
+		}
 	}
 
 	// ACK the stream messages

@@ -170,11 +170,9 @@ func (s *DbStore) GetLikeState(ctx context.Context, video_id string, user_id str
 
 }
 
-func (s *DbStore) GetComments(ctx context.Context, videoID string, parentID *string, cursor *time.Time, limit int) ([]schemas.CommentResponse, error) {
+func (s *DbStore) GetComments(ctx context.Context, videoID string, parentID *string, cursorTime *time.Time, cursorID *string, limit int) ([]schemas.CommentResponse, error) {
 	var query strings.Builder
-
-	// Pre-allocate slice capacity to reduce memory re-allocations during high traffic
-	args := make([]any, 0, 4)
+	args := make([]any, 0, 5) // Increased capacity slightly
 
 	// 1. Base Query
 	query.WriteString(`
@@ -186,9 +184,9 @@ func (s *DbStore) GetComments(ctx context.Context, videoID string, parentID *str
 		WHERE c.video_id = $1
 	`)
 	args = append(args, videoID)
-	argID := 2 //video_id and limit is confirmed that's why bydefault 2
+	argID := 2
 
-	// 2. Dynamic Parent ID (Fixes the "OR IS NULL" planner issue)
+	// 2. Dynamic Parent ID
 	if parentID == nil {
 		query.WriteString(` AND c.parent_id IS NULL`)
 	} else {
@@ -197,15 +195,16 @@ func (s *DbStore) GetComments(ctx context.Context, videoID string, parentID *str
 		argID++
 	}
 
-	// 3. Dynamic Keyset Pagination (Cursor)
-	if cursor != nil {
-		fmt.Fprintf(&query, ` AND c.created_at < $%d`, argID)
-		args = append(args, *cursor)
-		argID++
+	// 3. Dynamic Keyset Pagination (DUAL CURSOR)
+	if cursorTime != nil && cursorID != nil {
+		// Row value comparison: ensures exact deterministic sorting without skipping
+		fmt.Fprintf(&query, ` AND (c.created_at, c.id) < ($%d, $%d)`, argID, argID+1)
+		args = append(args, *cursorTime, *cursorID)
+		argID += 2
 	}
 
-	// 4. Sort and Limit
-	fmt.Fprintf(&query, ` ORDER BY c.created_at DESC LIMIT $%d`, argID)
+	// 4. Sort and Limit (Must sort by BOTH fields to match the cursor)
+	fmt.Fprintf(&query, ` ORDER BY c.created_at DESC, c.id DESC LIMIT $%d`, argID)
 	args = append(args, limit)
 
 	// 5. Execute Query
@@ -215,12 +214,11 @@ func (s *DbStore) GetComments(ctx context.Context, videoID string, parentID *str
 	}
 	defer rows.Close()
 
-	// Pre-allocate to the limit to avoid resizing the array under load
 	comments := make([]schemas.CommentResponse, 0, limit)
 
 	for rows.Next() {
 		var c schemas.CommentResponse
-		var pID *string // pgx natively supports scanning directly into a *string for NULLs
+		var pID *string
 
 		err := rows.Scan(
 			&c.ID, &pID, &c.Text, &c.ReplyCounts, &c.CreatedAt,

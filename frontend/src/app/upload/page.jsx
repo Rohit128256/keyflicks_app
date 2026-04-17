@@ -14,11 +14,21 @@ export default function UploadPage() {
   const abortControllerRef = useRef(null);
   const initialCheckDone = useRef(false);
 
+  // Synchronous cookie check to avoid the loading→idle flash/jerk
+  const getInitialState = () => {
+    if (typeof document === 'undefined') return 'loading';
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; Transcode_status=`);
+    if (parts.length === 2 && parts.pop().split(';').shift()) return 'processing';
+    return 'idle';
+  };
+
   const [file, setFile] = useState(null);
   const [formData, setFormData] = useState({ title: '', description: '' });
   const [isDragging, setIsDragging] = useState(false);
-  const [uploadState, setUploadState] = useState('loading'); // loading, idle, requesting, uploading, processing, complete, error
+  const [uploadState, setUploadState] = useState(getInitialState);
   const [progress, setProgress] = useState(0);
+  const [processingProgress, setProcessingProgress] = useState(0);
   const [statusMessage, setStatusMessage] = useState('');
   const [videoId, setVideoId] = useState(null); // HIDDEN from user until success
 
@@ -54,14 +64,16 @@ export default function UploadPage() {
 
         // IMMEDIATELY jump into the processing UI since we definitively have a tracker cookie
         setUploadState('processing');
-        setStatusMessage('Resuming active connection to processing vault...');
+        setStatusMessage('Your video is being processed...');
 
         const token = useAuthStore.getState().accessToken;
 
+        // If dev server proxy, hitting raw API domain can be safer, but Next respects Cache-Control: no-transform
         await fetchEventSource(`/api/stream-status?video_id=${savedId}`, {
             headers: {
                 Authorization: `Bearer ${token}`,
                 Accept: 'text/event-stream',
+                'Cache-Control': 'no-cache, no-transform' // Suggest to proxy to avoid buffer
             },
             signal: localAbort.signal,
             async onopen(response) {
@@ -74,10 +86,21 @@ export default function UploadPage() {
             },
             onmessage(event) {
                try {
-                   const payload = JSON.parse(event.data);
+                   // Clean leading/trailing spaces which might interfere with parsing
+                   const rawData = event.data?.trim();
+                   if (!rawData) return;
+                   
+                   const payload = JSON.parse(rawData);
                    const currentStatus = payload.data?.status;
                    
-                   setStatusMessage(`Processing status: ${currentStatus}...`);
+                   if (currentStatus === 'processing' && payload.data?.progress !== undefined) {
+                       setProcessingProgress(parseInt(payload.data.progress, 10));
+                       setStatusMessage(`Transcoding: ${payload.data.progress}%`);
+                   } else if (!currentStatus || currentStatus === 'processing') {
+                       setStatusMessage('Your video is being processed...');
+                   } else if (currentStatus && currentStatus !== 'ready' && currentStatus !== 'failed') {
+                       setStatusMessage(`Processing status: ${currentStatus}...`);
+                   }
                    
                    if (currentStatus === 'ready') {
                        setVideoId(savedId);
@@ -225,14 +248,25 @@ export default function UploadPage() {
            headers: {
                Authorization: `Bearer ${token}`,
                Accept: 'text/event-stream',
+               'Cache-Control': 'no-cache, no-transform'
            },
            signal: abortControllerRef.current.signal,
            onmessage(event) {
                try {
-                 const payload = JSON.parse(event.data);
+                 const rawData = event.data?.trim();
+                 if (!rawData) return;
+
+                 const payload = JSON.parse(rawData);
                  const currentStatus = payload.data?.status;
                  
-                 setStatusMessage(`Processing status: ${currentStatus}...`);
+                 if (currentStatus === 'processing' && payload.data?.progress !== undefined) {
+                     setProcessingProgress(parseInt(payload.data.progress, 10));
+                     setStatusMessage(`Transcoding: ${payload.data.progress}%`);
+                 } else if (!currentStatus || currentStatus === 'processing') {
+                     setStatusMessage('Your video is being processed...');
+                 } else if (currentStatus && currentStatus !== 'ready' && currentStatus !== 'failed') {
+                     setStatusMessage(`Processing status: ${currentStatus}...`);
+                 }
                  
                  if (currentStatus === 'ready') {
                      setVideoId(trackId);
@@ -268,6 +302,7 @@ export default function UploadPage() {
      setFormData({ title: '', description: '' });
      setUploadState('idle');
      setProgress(0);
+     setProcessingProgress(0);
      setStatusMessage('');
      setVideoId(null);
   };
@@ -386,21 +421,71 @@ export default function UploadPage() {
              boxShadow: '0 0 0 1px rgba(255,255,255,0.04) inset, 0 10px 40px rgba(0,0,0,0.3)'
            }}
          >
-            <div className="w-full max-w-sm bg-black/40 rounded-full h-3 mb-6 relative overflow-hidden border border-white/10 shadow-inner">
-               <div className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-[#e60000] to-[#ff3a3a] transition-all duration-300" style={{ width: `${progress}%` }}>
-                  <div className="absolute inset-0 bg-white/20 w-full h-full animate-[shimmer_1s_infinite] -skew-x-12"></div>
-               </div>
-            </div>
-            
-            <h3 className="text-xl font-bold text-white tracking-tight text-center">{statusMessage}</h3>
-            
             {uploadState === 'uploading' && (
-               <p className="text-accent/80 font-mono mt-3 tracking-widest text-sm bg-accent/10 px-3 py-1 rounded-md">{progress}% Transferred</p>
+              <>
+                <div className="w-full max-w-sm bg-black/40 rounded-full h-3 mb-6 relative overflow-hidden border border-white/10 shadow-inner">
+                   <div className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-[#e60000] to-[#ff3a3a] transition-all duration-300" style={{ width: `${progress}%` }}>
+                      <div className="absolute inset-0 bg-white/20 w-full h-full animate-[shimmer_1s_infinite] -skew-x-12"></div>
+                   </div>
+                </div>
+                <h3 className="text-xl font-bold text-white tracking-tight text-center">{statusMessage}</h3>
+                <p className="text-accent/80 font-mono mt-3 tracking-widest text-sm bg-accent/10 px-3 py-1 rounded-md">{progress}% Transferred</p>
+              </>
             )}
             {uploadState === 'processing' && (
-               <div className="flex items-center gap-2 mt-4 text-white/40 text-sm font-semibold select-none">
-                  <div className="w-2 h-2 rounded-full bg-accent animate-pulse"></div> Generating HLS Streams
-               </div>
+              <div className="w-full flex flex-col items-center justify-center pt-4 pb-2">
+                <div className="relative mb-6">
+                    {/* Pulsing Backglow */}
+                    <div className="absolute inset-0 bg-accent/20 blur-2xl rounded-full scale-150 animate-pulse"></div>
+                    
+                    {/* Ring Container */}
+                    <div className="relative w-32 h-32 rounded-full flex items-center justify-center bg-black/40 border border-white/5 shadow-[0_0_50px_rgba(230,0,0,0.15)] overflow-hidden">
+                        {/* Dynamic Sweep Gradient border */}
+                        <div className="absolute inset-0 rounded-full border-4 border-transparent bg-gradient-to-tr from-accent/10 via-accent/50 to-accent" style={{ WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)", WebkitMaskComposite: "xor", maskComposite: "exclude", padding: "3px", animation: "spin 3s linear infinite" }}></div>
+                        
+                        {/* Percentage Number Display */}
+                        <div className="flex flex-col items-center justify-center z-10 font-bold text-white tracking-widest relative">
+                            <span className="text-4xl leading-none flex items-start gap-0.5">
+                                {processingProgress}
+                                <span className="text-sm opacity-50">%</span>
+                            </span>
+                        </div>
+
+                        {/* Liquid Base effect - rises based on progress */}
+                        <div className="absolute bottom-0 w-full bg-gradient-to-t from-accent/30 to-transparent transition-all duration-700 ease-out z-0 mix-blend-screen" style={{ height: `${processingProgress}%` }}>
+                           <div className="w-full h-1 bg-accent/50 absolute top-0 blur-[2px] animate-pulse"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="w-full flex justify-center flex-col items-center max-w-sm mt-4">
+                    <div className="flex justify-between w-full mb-3 px-2">
+                        <span className="text-[10px] font-black text-white/40 uppercase tracking-widest mt-1">Processing</span>
+                        <div className="bg-accent/10 text-accent text-[10px] px-2 py-0.5 rounded uppercase font-bold border border-accent/20 flex items-center gap-1.5 shadow-[0_0_10px_rgba(230,0,0,0.2)]">
+                            <span className="w-1.5 h-1.5 rounded-full bg-accent animate-ping"></span> 
+                            Optimizing...
+                        </div>
+                    </div>
+                    {/* Main Progress Bar */}
+                    <div className="w-full bg-black/60 rounded-full h-2 mb-8 relative overflow-hidden ring-1 ring-white/5 shadow-inner">
+                       <div className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-orange-600 via-accent to-red-500 transition-all duration-[600ms] ease-out shadow-[0_0_10px_rgba(230,0,0,0.8)]" style={{ width: `${processingProgress}%` }}>
+                          <div className="absolute inset-0 bg-white/30 w-full h-full animate-[shimmer_1.5s_infinite] -skew-x-12"></div>
+                       </div>
+                    </div>
+                </div>
+
+                <h3 className="text-xl font-bold text-white tracking-tight text-center mb-3 drop-shadow-md">Getting Your Video Ready...</h3>
+                <p className="text-white/40 text-sm text-center max-w-md leading-relaxed font-light">Sit tight — we are optimizing your video for the best playback experience. This might take a moment.</p>
+                <div className="flex items-center gap-3 mt-8 bg-black/30 border border-white/5 px-5 py-2.5 rounded-full text-white/70 text-xs font-semibold shadow-inner">
+                   <Loader2 size={14} className="animate-spin text-accent" /> Preparing streams
+                </div>
+              </div>
+            )}
+            {(uploadState === 'requesting') && (
+              <>
+                <Loader2 size={32} className="animate-spin text-accent mb-4" />
+                <h3 className="text-xl font-bold text-white tracking-tight text-center">{statusMessage}</h3>
+              </>
             )}
          </div>
       )}

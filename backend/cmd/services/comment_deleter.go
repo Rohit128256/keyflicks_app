@@ -181,9 +181,10 @@ func (s *CommentsDeleter) processBatch(ctx context.Context, stream, group, worke
 	}
 
 	// 5. Batch Decrement comment_count in videos table
+	var updateVideoIDs []string
+	var minusComments []int
+
 	if len(videoCountsMap) > 0 {
-		var updateVideoIDs []string
-		var minusComments []int
 
 		for vID := range videoCountsMap {
 			updateVideoIDs = append(updateVideoIDs, vID)
@@ -213,7 +214,33 @@ func (s *CommentsDeleter) processBatch(ctx context.Context, stream, group, worke
 		return
 	}
 
-	// 7. Acknowledge messages
+	// 7. Update the Cache Counter only if field exists
+	if len(updateVideoIDs) > 0 {
+		pipe := s.redis.Client.Pipeline()
+
+		// LUA SCRIPT: Protects against the "HINCRBY Initialization Bug"
+		// Only decrements if the cache is already warm.
+		luaScript := `
+			if redis.call("HEXISTS", KEYS[1], ARGV[1]) == 1 then
+				return redis.call("HINCRBY", KEYS[1], ARGV[1], ARGV[2])
+			end
+			return 0
+		`
+
+		for i, vid := range updateVideoIDs {
+			counterKey := fmt.Sprintf("vid:%s:stats", vid)
+			// IMPORTANT: Multiply by -1 to subtract from the cache!
+			delta := -minusComments[i]
+			pipe.Eval(ctx, luaScript, []string{counterKey}, "comments", delta)
+		}
+
+		_, err := pipe.Exec(ctx)
+		if err != nil && err != redis.Nil {
+			log.Printf("[%s] Non-fatal error updating redis cache: %v", workerName, err)
+		}
+	}
+
+	// 8. Acknowledge messages
 	err = s.redis.Client.XAck(ctx, stream, group, msgIDs...).Err()
 	if err != nil {
 		log.Printf("[%s] Failed to XAck messages: %v", workerName, err)

@@ -5,8 +5,10 @@ import { useAuthStore } from '@/lib/store';
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
-import { User, Trash2, Play, UploadCloud, Loader2, FileVideo, AlertTriangle } from 'lucide-react';
+import { User, Trash2, Play, UploadCloud, Loader2, FileVideo, AlertTriangle, Copy } from 'lucide-react';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
+import { formatDistanceToNow } from 'date-fns';
 
 export default function DashboardPage() {
   const { isAuthenticated } = useAuthStore();
@@ -81,26 +83,41 @@ export default function DashboardPage() {
   // Delete Mutation
   const deleteVideoMutation = useMutation({
     mutationFn: async (videoId) => api.delete(`/video/${videoId}`),
+    onMutate: async (deletedVideoId) => {
+      await queryClient.cancelQueries({ queryKey: ['my-videos'] });
+      const previousVideos = queryClient.getQueryData(['my-videos']);
+      
+      // Optimistically remove the video from UI immediately
+      queryClient.setQueryData(['my-videos'], (oldData) => {
+         if (!oldData) return oldData;
+         return {
+            ...oldData,
+            pages: oldData.pages.map(page => ({
+               ...page,
+               videos: page.videos.filter(v => v.id !== deletedVideoId)
+            }))
+         };
+      });
+      
+      setIsDeletingId(null);
+      return { previousVideos };
+    },
+    onError: (err, deletedVideoId, context) => {
+      if (context?.previousVideos) {
+         queryClient.setQueryData(['my-videos'], context.previousVideos);
+      }
+      toast.error(err.response?.data?.error || "Failed to delete video");
+    },
     onSuccess: () => {
       toast.success("Video securely deleted");
-      queryClient.invalidateQueries({ queryKey: ['my-videos'] });
-      setIsDeletingId(null);
-    },
-    onError: (err) => {
-      toast.error(err.response?.data?.error || "Failed to delete video");
-      setIsDeletingId(null);
     }
   });
 
   const confirmDelete = () => {
     if (!videoToDelete) return;
     setIsDeletingId(videoToDelete.id);
+    deleteVideoMutation.mutate(videoToDelete.id);
     setVideoToDelete(null);
-    
-    // Allow animation to play before violently detaching from DOM
-    setTimeout(() => {
-       deleteVideoMutation.mutate(videoToDelete.id);
-    }, 300);
   };
 
   if (!isAuthenticated) return null;
@@ -161,12 +178,17 @@ export default function DashboardPage() {
          </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-         {status === 'success' && data.pages.map((page, i) => (
-            page.videos?.map(video => (
-               <div 
+      <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+         <AnimatePresence mode="popLayout">
+         {status === 'success' && data.pages.flatMap(p => p.videos || []).map(video => (
+               <motion.div 
+                 layout
+                 initial={{ opacity: 0, scale: 0.9 }}
+                 animate={{ opacity: 1, scale: 1 }}
+                 exit={{ opacity: 0, scale: 0.8, filter: 'blur(8px)' }}
+                 transition={{ layout: { type: "spring", stiffness: 300, damping: 30 }, duration: 0.2 }}
                  key={video.id} 
-                 className={`flex flex-col justify-between border rounded-2xl p-5 relative overflow-hidden group transition-all duration-300 ${isDeletingId === video.id ? 'opacity-0 scale-90' : 'opacity-100 scale-100 hover:bg-white/5'}`}
+                 className={`flex flex-col justify-between border rounded-2xl p-5 relative overflow-hidden group transition-colors hover:bg-white/5`}
                  style={{
                    background: 'rgba(255,255,255,0.02)',
                    borderColor: 'rgba(255,255,255,0.06)',
@@ -182,6 +204,19 @@ export default function DashboardPage() {
                      <p className="text-xs text-white/40 line-clamp-2 leading-relaxed font-light">
                         {video.description || "No description provided."}
                      </p>
+                     <div 
+                        className="mt-2.5 flex items-center gap-2 cursor-pointer group/copy bg-white/[0.03] hover:bg-white/[0.06] px-2.5 py-1.5 rounded-lg transition-colors w-fit max-w-full"
+                        onClick={() => { navigator.clipboard.writeText(video.id); toast.success('Video ID copied!'); }}
+                        title="Click to copy Video ID"
+                     >
+                        <span className="text-[10px] text-cyan-400/60 font-mono truncate">{video.id}</span>
+                        <Copy size={10} className="text-cyan-400/30 group-hover/copy:text-cyan-400/70 transition-colors shrink-0" />
+                     </div>
+                     {video.created_at && (
+                        <div className="mt-2 text-[10px] text-white/30 font-medium">
+                           {formatDistanceToNow(new Date(video.created_at), { addSuffix: true })}
+                        </div>
+                     )}
                   </div>
                   
                   <div className="flex gap-3 mt-auto">
@@ -199,10 +234,10 @@ export default function DashboardPage() {
                           {isDeletingId === video.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                       </button>
                   </div>
-               </div>
-            ))
+               </motion.div>
          ))}
-      </div>
+         </AnimatePresence>
+      </motion.div>
 
       {/* Loading States & Observer Target */}
       <div ref={observerTarget} className="w-full py-8 flex justify-center mt-4">
@@ -212,14 +247,14 @@ export default function DashboardPage() {
             </div>
          ) : hasNextPage ? (
             <div className="text-white/20 text-xs tracking-widest uppercase">Scroll for more</div>
-         ) : status === 'success' && data.pages[0]?.videos?.length > 0 ? (
+         ) : status === 'success' && data.pages.flatMap(p => p.videos || []).length > 0 ? (
             <div className="flex flex-col items-center">
               <div className="w-1 h-1 rounded-full bg-white/20 mb-2"></div>
               <p className="text-white/20 text-[10px] tracking-widest uppercase font-bold">End of Library</p>
             </div>
          ) : null}
          
-         {status === 'success' && data.pages[0]?.videos?.length === 0 && (
+         {status === 'success' && data.pages.flatMap(p => p.videos || []).length === 0 && (
              <div className="flex flex-col items-center justify-center py-20 w-full text-center">
                 <FileVideo size={48} className="text-white/10 mb-4" />
                 <h3 className="text-white/60 font-medium mb-2">Vault is Empty</h3>

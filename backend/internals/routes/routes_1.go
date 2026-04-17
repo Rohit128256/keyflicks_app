@@ -46,6 +46,7 @@ func SetupStreamingRoutes(
 			protected.POST("/like", eventHandler.ToggleLike)
 			protected.GET("/likes", eventHandler.Getlikes)
 			protected.POST("/comment", eventHandler.PostComment)
+			protected.GET("/getcommentnums", eventHandler.GetCommentsCount)
 			protected.GET("/comments", eventHandler.GetComments)
 			protected.DELETE("/delcomment", eventHandler.DeleteComment)
 

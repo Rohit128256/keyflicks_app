@@ -12,7 +12,11 @@ export default function Home() {
 
   const handleWatch = (e) => {
     e.preventDefault();
-    if (videoId.trim()) router.push(`/watch/${videoId.trim()}`);
+    // Strip whitespace and any characters not valid in a video ID (UUID chars only)
+    // This prevents navigating to malformed URLs if the browser autocomplete
+    // suggests a previously-visited path segment (e.g. a Redis key with quotes)
+    const cleanId = videoId.trim().replace(/[^a-zA-Z0-9\-_]/g, '');
+    if (cleanId) router.push(`/watch/${cleanId}`);
   };
 
   return (
@@ -84,6 +88,8 @@ export default function Home() {
               placeholder="Enter Video ID..."
               value={videoId}
               onChange={(e) => setVideoId(e.target.value)}
+              autoComplete="off"
+              spellCheck={false}
               className="flex-1 bg-black/40 px-5 py-3 rounded-xl border border-white/10 text-white text-sm focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/30 transition-all placeholder:text-white/20 font-mono"
               required
             />

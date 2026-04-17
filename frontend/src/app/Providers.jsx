@@ -46,7 +46,14 @@ export default function Providers({ children }) {
     }
   }, [isReady, isAuthenticated, pathname, router]);
 
-  if (!isReady) return null; // Avoid hydration mismatch on initial load with auth state
+  if (!isReady) {
+    return (
+      <div className="fixed inset-0 flex flex-col items-center justify-center gap-4" style={{ background: '#0f0f0f' }}>
+        <div className="w-10 h-10 rounded-full border-[3px] border-white/10 border-t-accent animate-spin" />
+        <span className="text-white/20 text-xs tracking-[0.3em] uppercase font-medium">KeyFlicks</span>
+      </div>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -283,8 +283,9 @@ func (w *DBWriter) processBatch(ctx context.Context, batch []redis.XMessage, wor
 	for _, fail := range failedUploads {
 		sseStream := fmt.Sprintf("job_status:%s", fail.UploadID)
 		pipe.XAdd(ctx, &redis.XAddArgs{
-			Stream: sseStream,
-			Values: map[string]any{"status": "failed"},
+			Stream:     sseStream,
+			NoMkStream: true,
+			Values:     map[string]any{"status": "failed"},
 		})
 		pipe.Expire(ctx, sseStream, 48*time.Hour)
 		pipe.Del(ctx, fmt.Sprintf("VideoInfoOf:%s", fail.UploadID))

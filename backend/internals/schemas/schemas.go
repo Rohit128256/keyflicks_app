@@ -79,7 +79,8 @@ type ResponseVideoData struct {
 	Status      string `json:"status"`
 	Title       string `json:"title,omitempty"`
 	Description string `json:"description,omitempty"`
-	Likes       int64  `json:"like_counts,omitempty"` // Changed to match your schema needs
+	Likes       int64  `json:"like_counts"`
+	Comments    int64  `json:"comment_counts"`
 	CreatedAt   string `json:"created_at,omitempty"`
 }
 

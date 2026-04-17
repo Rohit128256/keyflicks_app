@@ -257,9 +257,11 @@ func (h *StreamHandler) Stream_status(c *gin.Context) {
 	// Setting the headers needed for Server-Sent Events
 
 	c.Writer.Header().Set("Content-Type", "text/event-stream")
-	c.Writer.Header().Set("Cache-Control", "no-cache")
+	c.Writer.Header().Set("Cache-Control", "no-cache, no-transform")
 	c.Writer.Header().Set("Connection", "keep-alive")
 	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Writer.Header().Set("X-Accel-Buffering", "no") // Disable Nginx proxy buffering
+	c.Writer.Header().Set("Content-Encoding", "none") // Disable gzip buffering
 
 	// Force flush headers to explicitly trigger the client's `onopen` immediately
 	// Resolves infinite loading spinner states when proxied through Next.js
@@ -307,7 +309,7 @@ func (h *StreamHandler) Stream_status(c *gin.Context) {
 			msg := streams[0].Messages[0]
 			lastMessageID = msg.ID // IMPORTANT: Update so we get the *next* message
 
-			// Get status from message values
+			// get status from message values
 			status, ok := msg.Values["status"].(string)
 
 			if !ok {
@@ -316,18 +318,27 @@ func (h *StreamHandler) Stream_status(c *gin.Context) {
 
 			}
 
+			// get progress from message
+			progressStr, _ := msg.Values["progress"].(string)
+
+			var progressInt int
+			if progressStr != "" {
+				fmt.Sscanf(progressStr, "%d", &progressInt)
+			}
+
 			log.Printf("SSE: Got status '%s' for upload %s", status, upload_id)
 
 			// (Your JSON formatting logic is correct)
 			type sseInnerData struct {
-				Status string `json:"status"`
+				Status   string `json:"status"`
+				Progress int    `json:"progress,omitempty"`
 			}
 
 			type sseOuterData struct {
 				Data sseInnerData `json:"data"`
 			}
 
-			ssePayload := sseOuterData{Data: sseInnerData{Status: status}}
+			ssePayload := sseOuterData{Data: sseInnerData{Status: status, Progress: progressInt}}
 			jsonBytes, _ := json.Marshal(ssePayload)
 
 			fmt.Fprintf(w, "data: %s\n\n", string(jsonBytes))
@@ -518,6 +529,7 @@ func (h *StreamHandler) Get_status(c *gin.Context) {
 			Title:       videoInfo.Title,
 			Description: videoInfo.Description,
 			Likes:       videoInfo.Likes, // Sourced from your existing struct
+			Comments:    videoInfo.Comments,
 			CreatedAt:   videoInfo.CreatedAt.Format(time.RFC3339),
 		}
 
