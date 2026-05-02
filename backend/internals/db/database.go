@@ -124,7 +124,7 @@ func (s *DbStore) GetUserByEmail(ctx context.Context, email string) (*schemas.Us
 // function to get Video details by video id
 func (s *DbStore) GetVideoDetails(ctx context.Context, video_id string) (*schemas.VideoInDb, error) {
 
-	sql := `SELECT id , title , description , like_count , comment_count , created_at , updated_at
+	sql := `SELECT id , title , description , like_count , dislike_count , comment_count , created_at , updated_at
 			FROM videos
 			WHERE id = $1`
 
@@ -134,6 +134,7 @@ func (s *DbStore) GetVideoDetails(ctx context.Context, video_id string) (*schema
 		&video.Title,
 		&video.Description,
 		&video.Likes,
+		&video.Dislikes,
 		&video.Comments,
 		&video.CreatedAt,
 		&video.UpdatedAt,
@@ -146,28 +147,16 @@ func (s *DbStore) GetVideoDetails(ctx context.Context, video_id string) (*schema
 	return &video, nil
 }
 
-func (s *DbStore) GetLikeState(ctx context.Context, video_id string, user_id string) (*schemas.GetlikeState, error) {
-	var LikeState schemas.GetlikeState
+// Fetches JUST the user's reaction. Extremely fast O(1) indexed lookup.
+func (s *DbStore) GetUserReaction(ctx context.Context, videoID string, userID string) (string, error) {
+	var reactionType string
+	query := `SELECT type FROM video_likes WHERE user_id = $1 AND video_id = $2`
 
-	query := `
-			SELECT 
-				v.like_count, 
-				EXISTS(
-					SELECT 1 FROM video_likes vl 
-					WHERE vl.video_id = v.id AND vl.user_id = $2 AND vl.type = 'like'
-				)
-			FROM videos v 
-			WHERE v.id = $1;
-	`
-
-	err := s.db.QueryRow(ctx, query, video_id, user_id).Scan(&LikeState.VideoLikes, &LikeState.CurrUserLiked)
-
+	err := s.db.QueryRow(ctx, query, userID, videoID).Scan(&reactionType)
 	if err != nil {
-		return nil, err
+		return "none", nil // If no row exists, their state is "none"
 	}
-
-	return &LikeState, nil
-
+	return reactionType, nil
 }
 
 func (s *DbStore) GetComments(ctx context.Context, videoID string, parentID *string, cursorTime *time.Time, cursorID *string, limit int) ([]schemas.CommentResponse, error) {
@@ -291,7 +280,7 @@ func (s *DbStore) GetUserUploadedVideos(ctx context.Context, userID string, curs
 
 	// base Query
 	query.WriteString(`
-		SELECT id, title, description, like_count, comment_count, created_at, updated_at
+		SELECT id, title, description, like_count, dislike_count , comment_count, created_at, updated_at
 		FROM videos
 		WHERE user_id = $1
 	`)
@@ -323,7 +312,7 @@ func (s *DbStore) GetUserUploadedVideos(ctx context.Context, userID string, curs
 		var v schemas.VideoInDb
 
 		err := rows.Scan(
-			&v.ID, &v.Title, &v.Description, &v.Likes, &v.Comments, &v.CreatedAt, &v.UpdatedAt,
+			&v.ID, &v.Title, &v.Description, &v.Likes, &v.Dislikes, &v.Comments, &v.CreatedAt, &v.UpdatedAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan user video row: %w", err)

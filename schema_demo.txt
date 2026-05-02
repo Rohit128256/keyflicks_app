@@ -31,6 +31,7 @@ CREATE TABLE videos (
     title VARCHAR(255) NOT NULL,
     description TEXT,
     like_count BIGINT NOT NULL DEFAULT 0,
+    dislike_count BIGINT NOT NULL DEFAULT 0,
     comment_count BIGINT NOT NULL DEFAULT 0,
     
     

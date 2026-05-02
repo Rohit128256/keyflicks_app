@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import VideoPlayer from '@/components/VideoPlayer';
 import InteractionsBar from '@/components/InteractionsBar';
+import { LikeDislikeButtons } from '@/components/InteractionsBar';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { AlertCircle, Loader2, Clock, ChevronDown, Copy, Check } from 'lucide-react';
@@ -98,7 +99,12 @@ export default function WatchPage() {
           </div>
           
           <hr className="border-t border-white/[0.08] my-3" />
-          
+
+          {/* Like / Dislike capsule — above description */}
+          <div className="mt-1 mb-4">
+            <LikeDislikeButtons videoId={videoId} />
+          </div>
+
           {/* Description Card — Collapsible */}
           {statusData.description && (
              <div 

@@ -2,7 +2,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
-import { ThumbsUp, Send, MessageCircle, ChevronDown, Trash2, Reply, Loader2, User } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Send, MessageCircle, ChevronDown, Trash2, Reply, Loader2, User } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
@@ -53,12 +53,16 @@ function prependToInfiniteCache(old, newItem) {
   };
 }
 
-// ─── Like Button with Debounced Spam Protection ───
-function LikeButton({ videoId }) {
+export function LikeDislikeButtons({ videoId }) {
   const { isAuthenticated } = useAuthStore();
+
   const [liked, setLiked] = useState(false);
+  const [disliked, setDisliked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
-  const [animating, setAnimating] = useState(false);
+  const [dislikeCount, setDislikeCount] = useState(0);
+  const [likeAnimating, setLikeAnimating] = useState(false);
+  const [dislikeAnimating, setDislikeAnimating] = useState(false);
+
   const debounceRef = useRef(null);
   const lastSentRef = useRef(null);
 
@@ -73,50 +77,114 @@ function LikeButton({ videoId }) {
 
   useEffect(() => {
     if (likesData) {
-      setLiked(likesData.currUserLiked);
-      setLikeCount(likesData.videoLikes);
-      lastSentRef.current = likesData.currUserLiked ? 'like' : 'unlike';
+      setLiked(likesData.currUserLiked ?? false);
+      setDisliked(likesData.currUserDisliked ?? false);
+      setLikeCount(likesData.videoLikes ?? 0);
+      setDislikeCount(likesData.VideoDislikes ?? 0);
+      if (likesData.currUserLiked) lastSentRef.current = 'like';
+      else if (likesData.currUserDisliked) lastSentRef.current = 'dislike';
+      else lastSentRef.current = 'unlike';
     }
   }, [likesData]);
 
-  const handleToggle = useCallback(() => {
-    if (!isAuthenticated) return toast.error('Please login first');
-
-    setLiked(prev => !prev);
-    setLikeCount(c => (liked ? c - 1 : c + 1));
-    setAnimating(true);
-    setTimeout(() => setAnimating(false), 300);
-
-    const newState = !liked;
-
+  const scheduleApiCall = useCallback((action) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      const finalAction = newState ? 'like' : 'unlike';
-      if (finalAction !== lastSentRef.current) {
-        lastSentRef.current = finalAction;
-        api.post(`/like?video_id=${videoId}&action=${finalAction}`).catch(() => {
-          toast.error('Failed to update like');
+      if (action !== lastSentRef.current) {
+        lastSentRef.current = action;
+        api.post(`/like?video_id=${videoId}&action=${action}`).catch(() => {
+          toast.error('Failed to update');
         });
       }
     }, 500);
-  }, [videoId, isAuthenticated, liked]);
+  }, [videoId]);
+
+  const handleLike = useCallback(() => {
+    if (!isAuthenticated) return toast.error('Please login first');
+    const wasLiked = liked;
+    const wasDisliked = disliked;
+    if (wasLiked) {
+      setLiked(false);
+      setLikeCount(c => Math.max(0, c - 1));
+      setLikeAnimating(true);
+      setTimeout(() => setLikeAnimating(false), 300);
+      scheduleApiCall('unlike');
+    } else {
+      setLiked(true);
+      setLikeCount(c => c + 1);
+      setLikeAnimating(true);
+      setTimeout(() => setLikeAnimating(false), 300);
+      if (wasDisliked) {
+        setDisliked(false);
+        setDislikeCount(c => Math.max(0, c - 1));
+      }
+      scheduleApiCall('like');
+    }
+  }, [videoId, isAuthenticated, liked, disliked, scheduleApiCall]);
+
+  const handleDislike = useCallback(() => {
+    if (!isAuthenticated) return toast.error('Please login first');
+    const wasLiked = liked;
+    const wasDisliked = disliked;
+    if (wasDisliked) {
+      setDisliked(false);
+      setDislikeCount(c => Math.max(0, c - 1));
+      setDislikeAnimating(true);
+      setTimeout(() => setDislikeAnimating(false), 300);
+      scheduleApiCall('undislike');
+    } else {
+      setDisliked(true);
+      setDislikeCount(c => c + 1);
+      setDislikeAnimating(true);
+      setTimeout(() => setDislikeAnimating(false), 300);
+      if (wasLiked) {
+        setLiked(false);
+        setLikeCount(c => Math.max(0, c - 1));
+      }
+      scheduleApiCall('dislike');
+    }
+  }, [videoId, isAuthenticated, liked, disliked, scheduleApiCall]);
 
   return (
-    <button
-      onClick={handleToggle}
-      className={`flex items-center gap-2.5 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 select-none
-        ${liked
-          ? 'bg-accent/15 text-accent border border-accent/30'
-          : 'bg-white/[0.06] text-white/60 border border-white/10 hover:bg-white/10 hover:text-white'
-        }`}
-    >
-      <ThumbsUp
-        size={18}
-        fill={liked ? 'currentColor' : 'none'}
-        className={`transition-transform duration-300 ${animating ? 'scale-125' : 'scale-100'}`}
-      />
-      <span className="font-bold tabular-nums">{likeCount}</span>
-    </button>
+    // ── Single capsule pill (YouTube style) ──
+    <div className="inline-flex items-center rounded-full border border-white/[0.12] bg-white/[0.06] overflow-hidden select-none">
+      {/* Like half */}
+      <button
+        onClick={handleLike}
+        className={`flex items-center gap-2 px-5 py-2 text-sm font-semibold transition-all duration-200
+          ${liked
+            ? 'bg-accent/20 text-accent'
+            : 'text-white/60 hover:bg-white/10 hover:text-white'
+          }`}
+      >
+        <ThumbsUp
+          size={17}
+          fill={liked ? 'currentColor' : 'none'}
+          className={`transition-transform duration-300 ${likeAnimating ? 'scale-125' : 'scale-100'}`}
+        />
+        <span className="font-bold tabular-nums">{likeCount}</span>
+      </button>
+
+      {/* Central divider */}
+      <div className="w-px self-stretch bg-white/[0.12]" />
+
+      {/* Dislike half */}
+      <button
+        onClick={handleDislike}
+        className={`flex items-center gap-2 px-5 py-2 text-sm font-semibold transition-all duration-200
+          ${disliked
+            ? 'bg-red-500/20 text-red-400'
+            : 'text-white/60 hover:bg-white/10 hover:text-white'
+          }`}
+      >
+        <ThumbsDown
+          size={17}
+          fill={disliked ? 'currentColor' : 'none'}
+          className={`transition-transform duration-300 ${dislikeAnimating ? 'scale-125' : 'scale-100'}`}
+        />
+        <span className="font-bold tabular-nums">{dislikeCount}</span>
+      </button>
+    </div>
   );
 }
 
@@ -608,11 +676,6 @@ export default function InteractionsBar({ videoId }) {
 
   return (
     <div className="mt-6">
-      {/* Like bar */}
-      <div className="flex items-center gap-3 pb-5 border-b border-white/[0.06]">
-        <LikeButton videoId={videoId} />
-      </div>
-
       {/* Comments Section */}
       <div className="mt-6">
         <div className="flex items-center gap-2 mb-5">

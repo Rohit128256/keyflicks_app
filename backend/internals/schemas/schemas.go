@@ -39,14 +39,17 @@ type VideoInDb struct {
 	Title       string    `json:"title" db:"title"`
 	Description string    `json:"description" db:"description"`
 	Likes       int64     `json:"likes" db:"like_count"`
+	Dislikes    int64     `json:"dislikes" db:"dislike_count"`
 	Comments    int64     `json:"comments" db:"comment_count"`
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
 }
 
 type GetlikeState struct {
-	VideoLikes    int64 `json:"videoLikes"`
-	CurrUserLiked bool  `json:"currUserLiked"`
+	VideoLikes       int64 `json:"videoLikes"`
+	VideoDislikes    int64 `json:"videoDislikes"`
+	CurrUserLiked    bool  `json:"currUserLiked"`
+	CurrUserDisliked bool  `json:"currUserDisliked"`
 }
 
 type VideoComment struct {

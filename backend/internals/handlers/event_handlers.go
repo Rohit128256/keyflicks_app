@@ -30,7 +30,8 @@ func (h *EventHandler) ToggleLike(c *gin.Context) {
 	actionType := c.Query("action")
 	user, exists := c.Get("currentUser")
 
-	if actionType != "like" && actionType != "unlike" {
+	// 1. Validate the 4 exact actions
+	if actionType != "like" && actionType != "unlike" && actionType != "dislike" && actionType != "undislike" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid action type"})
 		return
 	}
@@ -46,43 +47,52 @@ func (h *EventHandler) ToggleLike(c *gin.Context) {
 	stateKey := fmt.Sprintf("vid:%s:user:%s", video_id, curruserId)
 	streamKey := "stream:likes_ingest"
 
-	// read Current Optimistic State (Fast Cache Read)
-	currentState := h.redis.Client.Get(c, stateKey).Val()
+	// 2. Map Action to Absolute Tri-State
+	targetState := "none" // Default for "unlike" and "undislike"
+	if actionType == "like" {
+		targetState = "like"
+	} else if actionType == "dislike" {
+		targetState = "dislike"
+	}
 
-	// 2. Debounce Spammers Instantly
-	// If the user already clicked "like" and clicks it again, or "unlike" and clicks again,
-	// we just silently drop the request. No stream bloat.
-	if currentState == actionType {
+	// 3. Read Current Optimistic State (Fast Cache Read)
+	currentState, err := h.redis.Client.Get(c.Request.Context(), stateKey).Result()
+	if err == redis.Nil || currentState == "" {
+		currentState = "none"
+	} else if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Cache error"})
+		return
+	}
+
+	// 4. Debounce Spammers Instantly
+	if currentState == targetState {
 		c.Status(http.StatusNoContent)
 		return
 	}
 
-	// optimistic update & event streaming in single network trip
+	// 5. Update personal state & push to stream in ONE network trip
 	pipe := h.redis.Client.Pipeline()
 
-	// Set the optimistic state so subsequent clicks are instantly debounced above.
-	// We cache BOTH "like" and "unlike" explicitly to prevent db-lookups on repeated unlikes.
-	pipe.Set(c, stateKey, actionType, 5*time.Hour)
+	// Set the state so subsequent clicks are instantly debounced above
+	pipe.Set(c.Request.Context(), stateKey, targetState, 5*time.Hour)
 
-	// Push the intent to the background worker.
-	// The DB will ultimately decide if this is mathematically valid.
-	pipe.XAdd(c, &redis.XAddArgs{
+	// Push the final state to the background worker
+	pipe.XAdd(c.Request.Context(), &redis.XAddArgs{
 		Stream: streamKey,
 		Values: map[string]any{
 			"video_id": video_id,
 			"user_id":  curruserId,
-			"action":   actionType,
+			"state":    targetState,
 		},
 	})
 
-	_, err := pipe.Exec(c)
-	if err != nil {
-		log.Printf("Failed to process like event pipeline for video %s: %v", video_id, err)
+	_, pipeErr := pipe.Exec(c.Request.Context())
+	if pipeErr != nil {
+		log.Printf("Failed to process reaction pipeline for video %s: %v", video_id, pipeErr)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to queue action"})
 		return
 	}
 
-	// return instantly
 	c.Status(http.StatusAccepted)
 }
 
@@ -102,70 +112,77 @@ func (h *EventHandler) Getlikes(c *gin.Context) {
 	stateKey := fmt.Sprintf("vid:%s:user:%s", video_id, curruserId)
 	counterKey := fmt.Sprintf("vid:%s:stats", video_id)
 
-	// 1. Fetch both states from Redis in ONE network trip
-	pipe := h.redis.Pipeline()
-	stateCmd := pipe.Get(c, stateKey)
-	countCmd := pipe.HGet(c, counterKey, "likes")
-	_, _ = pipe.Exec(c)
+	// fetch both from Redis in single trip
+	pipe := h.redis.Client.Pipeline()
+	stateCmd := pipe.Get(c.Request.Context(), stateKey)
+	countCmd := pipe.HMGet(c.Request.Context(), counterKey, "likes", "dislikes")
+	_, _ = pipe.Exec(c.Request.Context())
 
-	// 2. Parse User Like State from Cache
-	currUserLiked := false
-	if stateCmd.Err() == nil && stateCmd.Val() == "like" {
-		currUserLiked = true
-	}
+	// evaluating cache misses Separately!
+	counts, countErr := countCmd.Result()
+	counterMiss := countErr == redis.Nil || len(counts) < 2 || counts[0] == nil || counts[1] == nil
+	stateMiss := stateCmd.Err() == redis.Nil
 
-	// 3. Parse Total Likes from Cache
-	var videoLikes int64
-	if countCmd.Err() == nil {
-		videoLikes, _ = countCmd.Int64()
-	}
+	var videoLikes, videoDislikes int64
+	currUserLiked, currUserDisliked := false, false
 
-	// 4. Database Fallback Trigger
-	// We MUST hit the DB if EITHER the total count is missing OR the user's specific state is missing.
-	needsDBFallback := countCmd.Err() == redis.Nil || stateCmd.Err() == redis.Nil
+	// fallback only for missing Counters
+	if counterMiss {
+		// using existing DB method!
+		videoInfo, err := h.db.GetVideoDetails(c.Request.Context(), video_id)
+		if err == nil {
+			videoLikes = videoInfo.Likes
+			videoDislikes = videoInfo.Dislikes
 
-	if needsDBFallback || countCmd.Err() != nil && countCmd.Err() != redis.Nil {
-
-		// Use DbStore method
-		dbState, err := h.db.GetLikeState(c, video_id, curruserId)
-		if err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Video not found"})
-			return
+			// Heal Counter Cache
+			go func(vID string, l, d int64) {
+				bgCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+				defer cancel()
+				cKey := fmt.Sprintf("vid:%s:stats", vID)
+				healPipe := h.redis.Client.Pipeline()
+				healPipe.HSetNX(bgCtx, cKey, "likes", l)
+				healPipe.HSetNX(bgCtx, cKey, "dislikes", d)
+				healPipe.Expire(bgCtx, cKey, 30*time.Minute)
+				_, _ = healPipe.Exec(bgCtx)
+			}(video_id, videoLikes, videoDislikes)
 		}
+	} else {
+		// Cache Hit
+		if likesStr, ok := counts[0].(string); ok {
+			fmt.Sscanf(likesStr, "%d", &videoLikes)
+		}
+		if dislikesStr, ok := counts[1].(string); ok {
+			fmt.Sscanf(dislikesStr, "%d", &videoDislikes)
+		}
+	}
 
-		// Map the db results to our local variables
-		videoLikes = dbState.VideoLikes
-		currUserLiked = dbState.CurrUserLiked
+	// fallback only for missing User State
+	if stateMiss {
+		// Microscopic point-read just for this user
+		dbState, _ := h.db.GetUserReaction(c.Request.Context(), video_id, curruserId)
+		currUserLiked = dbState == "like"
+		currUserDisliked = dbState == "dislike"
 
-		// 5. Asynchronously HEAL BOTH CACHES so the next read is instant
-		go func(vID, uID string, likes int64, userLiked bool) {
+		// Heal User State Cache (Explicitly cache "none" so they never hit the DB again)
+		go func(vID, uID, state string) {
 			bgCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 			defer cancel()
-
-			cKey := fmt.Sprintf("vid:%s:stats", vID)
 			sKey := fmt.Sprintf("vid:%s:user:%s", vID, uID)
+			h.redis.Client.Set(bgCtx, sKey, state, 5*time.Hour)
+		}(video_id, curruserId, dbState)
 
-			healPipe := h.redis.Pipeline()
-
-			// Heal Counter (Using HSetNX to ensure DB truth overwrites any stale cache)
-			healPipe.HSetNX(bgCtx, cKey, "likes", likes)
-			healPipe.Expire(bgCtx, cKey, 30*time.Minute)
-
-			// Heal User State explicitly (Caching both "like" and "unlike")
-			stateVal := "unlike"
-			if userLiked {
-				stateVal = "like"
-			}
-			healPipe.Set(bgCtx, sKey, stateVal, 5*time.Hour)
-
-			_, _ = healPipe.Exec(bgCtx)
-		}(video_id, curruserId, videoLikes, currUserLiked)
+	} else {
+		// Cache Hit
+		cachedState := stateCmd.Val()
+		currUserLiked = cachedState == "like"
+		currUserDisliked = cachedState == "dislike"
 	}
 
-	// Returning the perfectly accurate payload
 	c.JSON(http.StatusOK, gin.H{
-		"videoLikes":    videoLikes,
-		"currUserLiked": currUserLiked,
+		"videoLikes":       videoLikes,
+		"currUserLiked":    currUserLiked,
+		"VideoDislikes":    videoDislikes,
+		"currUserDisliked": currUserDisliked,
 	})
 }
 

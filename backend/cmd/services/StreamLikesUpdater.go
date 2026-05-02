@@ -19,7 +19,7 @@ type LikeEvent struct {
 	MessageID string // We need this to ACK the message in Redis later
 	VideoID   string
 	UserID    string
-	Action    string // "like" or "unlike"
+	State     string // "like" or "unlike"
 }
 
 type StreamLikesWorker struct {
@@ -109,7 +109,7 @@ func (w *StreamLikesWorker) consumeStream(ctx context.Context, numWorkers int, c
 				for _, msg := range stream.Messages {
 					vID, ok1 := msg.Values["video_id"].(string)
 					uID, ok2 := msg.Values["user_id"].(string)
-					action, ok3 := msg.Values["action"].(string)
+					state, ok3 := msg.Values["state"].(string)
 
 					if !ok1 || !ok2 || !ok3 {
 						log.Printf("Malformed message in stream %s, skipping...", msg.ID)
@@ -121,7 +121,7 @@ func (w *StreamLikesWorker) consumeStream(ctx context.Context, numWorkers int, c
 						MessageID: msg.ID,
 						VideoID:   vID,
 						UserID:    uID,
-						Action:    action,
+						State:     state,
 					}
 
 					// THE MAGIC: Route to a specific worker channel based on a hash of the VideoID
@@ -183,36 +183,17 @@ func (w *StreamLikesWorker) processBatch(ctx context.Context, workerID int, batc
 	collapsedState := make(map[string]string)
 	messageIDs := make([]string, 0, len(batch))
 
+	var checkVids, checkUids []string
+
 	for _, event := range batch {
 		key := fmt.Sprintf("%s:%s", event.VideoID, event.UserID)
-		collapsedState[key] = event.Action
+		if _, exists := collapsedState[key]; !exists {
+			checkVids = append(checkVids, event.VideoID)
+			checkUids = append(checkUids, event.UserID)
+		}
+		collapsedState[key] = event.State
 		messageIDs = append(messageIDs, event.MessageID)
 	}
-
-	var insertUsers, insertVideos []string
-	var deleteUsers, deleteVideos []string
-
-	for key, action := range collapsedState {
-
-		parts := strings.Split(key, ":")
-		if len(parts) != 2 {
-			log.Printf("Worker %d: Malformed collapsed state key: %s", workerID, key)
-			continue
-		}
-
-		vID := parts[0]
-		uID := parts[1]
-
-		if action == "like" {
-			insertVideos = append(insertVideos, vID)
-			insertUsers = append(insertUsers, uID)
-		} else if action == "unlike" {
-			deleteVideos = append(deleteVideos, vID)
-			deleteUsers = append(deleteUsers, uID)
-		}
-	}
-
-	videoDeltas := make(map[string]int64)
 
 	// START TRANSACTION
 	tx, err := w.db.Begin(ctx)
@@ -220,130 +201,161 @@ func (w *StreamLikesWorker) processBatch(ctx context.Context, workerID int, batc
 		log.Printf("Worker %d: Failed to begin transaction: %v", workerID, err)
 		return
 	}
-
-	// defer rollback. If tx.Commit() succeeds, this does nothing.
-	// If the function panics or returns early, this safely undoes partial work.
 	defer tx.Rollback(ctx)
 
-	// 2. BULK DATABASE INSERT (Validated "Likes")
-	if len(insertVideos) > 0 {
-		insertQuery := `
-			INSERT INTO video_likes (user_id, video_id, type)
-			SELECT unnested.user_id, unnested.video_id, 'like'
-			FROM UNNEST($1::uuid[], $2::uuid[]) AS unnested(user_id, video_id)
-			ON CONFLICT (user_id, video_id) DO NOTHING
-			RETURNING video_id;
-		`
-
-		rows, err := tx.Query(ctx, insertQuery, insertUsers, insertVideos) // Note: using tx.Query
-		if err != nil {
-			log.Printf("Worker %d: Bulk insert failed: %v", workerID, err)
-			return
-		}
-
+	// 2. THE FAST PRE-READ: Fetch current DB state for these specific users (Extremely fast via Index)
+	dbStates := make(map[string]string)
+	preReadQuery := `
+		SELECT vl.video_id, vl.user_id, vl.type
+		FROM video_likes vl
+		INNER JOIN UNNEST($1::uuid[], $2::uuid[]) AS req(v_id, u_id)
+		ON vl.user_id = req.u_id AND vl.video_id = req.v_id;
+	`
+	rows, err := tx.Query(ctx, preReadQuery, checkVids, checkUids)
+	if err == nil {
 		for rows.Next() {
-			var validVid string
-			if err := rows.Scan(&validVid); err == nil {
-				videoDeltas[validVid]++
-			}
-		}
-		rows.Close() // Close early before next query
-
-		if err := rows.Err(); err != nil {
-			log.Printf("Worker %d: Bulk insert rows iteration failed: %v", workerID, err)
-			return
-		}
-	}
-
-	// 3. BULK DATABASE DELETE (Validated "Unlikes")
-	if len(deleteVideos) > 0 {
-		deleteQuery := `
-			DELETE FROM video_likes vl
-			USING UNNEST($1::uuid[], $2::uuid[]) AS unnested(user_id, video_id)
-			WHERE vl.user_id = unnested.user_id AND vl.video_id = unnested.video_id
-			RETURNING vl.video_id;
-		`
-
-		rows, err := tx.Query(ctx, deleteQuery, deleteUsers, deleteVideos) // Note: using tx.Query
-		if err != nil {
-			log.Printf("Worker %d: Bulk delete failed: %v", workerID, err)
-			return
-		}
-
-		for rows.Next() {
-			var validVid string
-			if err := rows.Scan(&validVid); err == nil {
-				videoDeltas[validVid]--
+			var v, u, t string
+			if err := rows.Scan(&v, &u, &t); err == nil {
+				dbStates[v+":"+u] = t
 			}
 		}
 		rows.Close()
+	}
 
-		if err := rows.Err(); err != nil {
-			log.Printf("Worker %d: Bulk delete rows iteration failed: %v", workerID, err)
+	// 3. TRI-STATE DELTA MATH IN GO (Zero DB overhead)
+	var upsertVids, upsertUids, upsertTypes []string
+	var deleteVids, deleteUids []string
+	likeDeltas := make(map[string]int64)
+	dislikeDeltas := make(map[string]int64)
+
+	for key, targetState := range collapsedState {
+		parts := strings.Split(key, ":")
+		vid, uid := parts[0], parts[1]
+
+		currState := dbStates[key] // cuurent database state
+		if currState == "" {
+			currState = "none"
+		}
+
+		if currState == targetState {
+			continue // Perfect sync, do nothing!
+		}
+
+		// Remove old state from counters
+		if currState == "like" {
+			likeDeltas[vid]--
+		}
+		if currState == "dislike" {
+			dislikeDeltas[vid]--
+		}
+
+		// Add new state to counters
+		if targetState == "like" {
+			likeDeltas[vid]++
+		}
+		if targetState == "dislike" {
+			dislikeDeltas[vid]++
+		}
+
+		// Route to Upsert or Delete arrays
+		if targetState == "none" {
+			deleteVids = append(deleteVids, vid)
+			deleteUids = append(deleteUids, uid)
+		} else {
+			upsertVids = append(upsertVids, vid)
+			upsertUids = append(upsertUids, uid)
+			upsertTypes = append(upsertTypes, targetState)
+		}
+	}
+
+	// 4. BULK UPSERT (Handles brand new likes/dislikes AND swapping types)
+	if len(upsertVids) > 0 {
+		upsertQuery := `
+			INSERT INTO video_likes (user_id, video_id, type)
+			SELECT unnested.user_id, unnested.video_id, unnested.type
+			FROM UNNEST($1::uuid[], $2::uuid[], $3::varchar[]) AS unnested(user_id, video_id, type)
+			ON CONFLICT (user_id, video_id) DO UPDATE SET type = EXCLUDED.type;
+		`
+		if _, err = tx.Exec(ctx, upsertQuery, upsertUids, upsertVids, upsertTypes); err != nil {
+			log.Printf("Worker %d: Bulk upsert failed: %v", workerID, err)
 			return
 		}
 	}
 
-	// 4. BULK COUNTER UPDATES (Postgres)
-	var updateIDs []string
-	var updateCounts []int64
-
-	for vid, delta := range videoDeltas {
-		if delta != 0 {
-			updateIDs = append(updateIDs, vid)
-			updateCounts = append(updateCounts, delta)
+	// 5. BULK DELETE (Handles unliking/undisliking down to "none")
+	if len(deleteVids) > 0 {
+		deleteQuery := `
+			DELETE FROM video_likes vl
+			USING UNNEST($1::uuid[], $2::uuid[]) AS unnested(user_id, video_id)
+			WHERE vl.user_id = unnested.user_id AND vl.video_id = unnested.video_id;
+		`
+		if _, err = tx.Exec(ctx, deleteQuery, deleteUids, deleteVids); err != nil {
+			log.Printf("Worker %d: Bulk delete failed: %v", workerID, err)
+			return
 		}
 	}
 
-	if len(updateIDs) > 0 {
+	// 6. BULK UPDATE BOTH COUNTERS
+	var updateVids []string
+	var updateLikes, updateDislikes []int64
+
+	// Create a unique set of video IDs that need updates
+	vidsToUpdate := make(map[string]bool)
+	for v := range likeDeltas {
+		vidsToUpdate[v] = true
+	}
+	for v := range dislikeDeltas {
+		vidsToUpdate[v] = true
+	}
+
+	for vid := range vidsToUpdate {
+		ld, dd := likeDeltas[vid], dislikeDeltas[vid]
+		if ld != 0 || dd != 0 {
+			updateVids = append(updateVids, vid)
+			updateLikes = append(updateLikes, ld)
+			updateDislikes = append(updateDislikes, dd)
+		}
+	}
+
+	if len(updateVids) > 0 {
+		// GREATEST(0) ensures counters mathematically cannot dip below 0 if DB gets out of sync
 		updateQuery := `
 			UPDATE videos AS v
-			SET like_count = like_count + unnested.delta
-			FROM UNNEST($1::uuid[], $2::bigint[]) AS unnested(id, delta)
+			SET like_count = GREATEST(0, v.like_count + unnested.l_delta),
+			    dislike_count = GREATEST(0, v.dislike_count + unnested.d_delta)
+			FROM UNNEST($1::uuid[], $2::bigint[], $3::bigint[]) AS unnested(id, l_delta, d_delta)
 			WHERE v.id = unnested.id;
 		`
-		_, err := tx.Exec(ctx, updateQuery, updateIDs, updateCounts) // Note: using tx.Exec
-		if err != nil {
+		if _, err := tx.Exec(ctx, updateQuery, updateVids, updateLikes, updateDislikes); err != nil {
 			log.Printf("Worker %d: Bulk counter update failed: %v", workerID, err)
 			return
 		}
 	}
 
-	// COMMIT TRANSACTION
+	// 7. COMMIT TRANSACTION
 	if err := tx.Commit(ctx); err != nil {
 		log.Printf("Worker %d: Transaction commit failed: %v", workerID, err)
-		return // Do not update Redis Cache or ACK if commit fails!
+		return
 	}
 
-	// 5. CACHE UPDATES & STREAM ACKNOWLEDGMENT (Only executed if DB succeeded)
-
-	// Update the Redis Cache
-	if len(updateIDs) > 0 {
+	// 8. CACHE UPDATES & STREAM ACKNOWLEDGMENT
+	if len(updateVids) > 0 {
 		pipe := w.redis.Client.Pipeline()
-
-		// LUA SCRIPT: Only increment if the specific field already exists.
-		// This mathematically guarantees we never initialize an expired cache to a low number.
+		// LUA SCRIPT: Update BOTH cache fields ONLY if the hash is already warm.
 		luaScript := `
-			if redis.call("HEXISTS", KEYS[1], ARGV[1]) == 1 then
-				return redis.call("HINCRBY", KEYS[1], ARGV[1], ARGV[2])
+			if redis.call("HEXISTS", KEYS[1], "likes") == 1 then
+				redis.call("HINCRBY", KEYS[1], "likes", ARGV[1])
+				redis.call("HINCRBY", KEYS[1], "dislikes", ARGV[2])
+				return 1
 			end
 			return 0
 		`
-
-		for i, vid := range updateIDs {
+		for i, vid := range updateVids {
 			counterKey := fmt.Sprintf("vid:%s:stats", vid)
-			// Pass the script, the key (KEYS[1]), the field (ARGV[1]), and the delta (ARGV[2])
-			pipe.Eval(ctx, luaScript, []string{counterKey}, "likes", updateCounts[i])
+			pipe.Eval(ctx, luaScript, []string{counterKey}, updateLikes[i], updateDislikes[i])
 		}
-		_, err := pipe.Exec(ctx)
-		if err != nil && err != redis.Nil {
-			log.Printf("Worker %d: Non-fatal error updating redis cache: %v", workerID, err)
-		}
+		_, _ = pipe.Exec(ctx)
 	}
 
-	// ACK the stream messages
-	err = w.redis.Client.XAck(ctx, "stream:likes_ingest", "likes_worker_group", messageIDs...).Err()
-	if err != nil {
-		log.Printf("Worker %d: Failed to ACK stream messages (DB succeeded): %v", workerID, err)
-	}
+	w.redis.Client.XAck(ctx, "stream:likes_ingest", "likes_worker_group", messageIDs...)
 }
