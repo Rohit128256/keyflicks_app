@@ -355,12 +355,12 @@ export default function UploadPage() {
                    </div>
                    <div className="flex-1">
                      <label className="text-xs font-semibold text-white/40 uppercase tracking-widest pl-2 mb-2 block">Description</label>
-                     <textarea 
-                       value={formData.description} 
-                       onChange={e => setFormData({...formData, description: e.target.value})} 
-                       placeholder="A brief overview of the video..."
-                       className="w-full h-[120px] bg-black/40 px-5 py-4 rounded-2xl border border-white/10 text-white text-sm focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/30 transition-all shadow-inner placeholder:text-white/20 resize-none font-light leading-relaxed"
-                     />
+                      <textarea 
+                        value={formData.description} 
+                        onChange={e => setFormData({...formData, description: e.target.value})} 
+                        placeholder="A brief overview of the video..."
+                        className="w-full h-[120px] bg-black/40 px-5 py-4 rounded-2xl border border-white/10 text-white text-sm focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/30 transition-all shadow-inner placeholder:text-white/20 resize-none font-light leading-relaxed [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/15 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-white/25"
+                      />
                    </div>
                 </div>
 

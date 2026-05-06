@@ -10,6 +10,28 @@ import { AlertCircle, Loader2, Clock, ChevronDown, Copy, Check } from 'lucide-re
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 
+// Parses plain text and turns URLs into clickable <a> tags
+function renderDescription(text) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+  return parts.map((part, i) =>
+    urlRegex.test(part) ? (
+      <a
+        key={i}
+        href={part}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
+        className="text-accent underline underline-offset-2 hover:text-accent/80 transition-colors break-all"
+      >
+        {part}
+      </a>
+    ) : (
+      part
+    )
+  );
+}
+
 export default function WatchPage() {
   const params = useParams();
   const videoId = params.id;
@@ -107,29 +129,46 @@ export default function WatchPage() {
 
           {/* Description Card — Collapsible */}
           {statusData.description && (
-             <div 
+             <div
                 className="mt-3 p-4 bg-white/[0.04] hover:bg-white/[0.06] rounded-xl cursor-pointer transition-colors group"
                 onClick={() => setDescExpanded(!descExpanded)}
              >
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-2 mb-2">
                    {statusData.created_at && (
                       <span className="text-xs text-white/50 font-medium">
                          {formatDistanceToNow(new Date(statusData.created_at), { addSuffix: true })}
                       </span>
                    )}
-                   <ChevronDown 
-                      size={14} 
-                      className={`text-white/30 transition-transform duration-200 ml-auto ${descExpanded ? 'rotate-180' : ''}`} 
+                   <ChevronDown
+                      size={14}
+                      className={`text-white/30 transition-transform duration-300 ml-auto ${descExpanded ? 'rotate-180' : ''}`}
                    />
                 </div>
-                <div className={`overflow-hidden transition-all duration-300 ${descExpanded ? 'max-h-[800px]' : 'max-h-[3.2em]'}`}>
-                   <p className="text-white/60 text-sm leading-relaxed font-light whitespace-pre-wrap">
-                      {statusData.description}
-                   </p>
+
+                {/* Grid-rows trick: animates from 0fr → 1fr for butter-smooth expand/collapse */}
+                <div
+                   className="grid transition-[grid-template-rows] duration-300 ease-in-out"
+                   style={{ gridTemplateRows: descExpanded ? '1fr' : '0fr' }}
+                >
+                   <div className="overflow-hidden">
+                      <p className="text-white/60 text-sm leading-relaxed font-light whitespace-pre-wrap pb-1">
+                         {renderDescription(statusData.description)}
+                      </p>
+                   </div>
                 </div>
+
+                {/* Collapsed preview — always visible, fades out when expanded */}
                 {!descExpanded && (
-                   <span className="text-xs text-white/30 font-medium mt-1 inline-block">...more</span>
+                   <p className="text-white/60 text-sm leading-relaxed font-light whitespace-pre-wrap line-clamp-2">
+                      {renderDescription(statusData.description)}
+                   </p>
                 )}
+
+                <span className={`text-xs font-semibold mt-2 inline-block transition-colors ${
+                   descExpanded ? 'text-accent/60' : 'text-white/30'
+                }`}>
+                   {descExpanded ? 'Show less' : '...more'}
+                </span>
              </div>
           )}
 

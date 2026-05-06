@@ -8,6 +8,9 @@ import (
 	"time"
 
 	"keyflicks_app/internals/cache"
+	"keyflicks_app/internals/schemas"
+
+	"encoding/json"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
@@ -87,14 +90,14 @@ func (s *CommentsWriter) processBatch(ctx context.Context, stream, group, worker
 		return
 	}
 
-	var userIDs []string
-	var videoIDs []string
-	var texts []string
+	var userIDs, videoIDs, texts []string
 	var parentIDs []*string // Pointers are used so we can pass 'nil' to Postgres for NULL
 	var createdAts []time.Time
 
 	replyCountsMap := make(map[string]int)
 	videoCountsMap := make(map[string]int)
+	parentVideoMap := make(map[string]string)
+
 	var msgIDs []string
 
 	// 1. Parse the payloads from Redis
@@ -116,6 +119,8 @@ func (s *CommentsWriter) processBatch(ctx context.Context, stream, group, worker
 		if pID, ok := msg.Values["parent_id"].(string); ok && pID != "" {
 			parentIDs = append(parentIDs, &pID)
 			replyCountsMap[pID]++ // Tally the replies for the batch update
+			parentVideoMap[pID] = vID
+			// Track video for this reply
 		} else {
 			parentIDs = append(parentIDs, nil)
 		}
@@ -131,14 +136,39 @@ func (s *CommentsWriter) processBatch(ctx context.Context, stream, group, worker
 
 	// 3. Batch Insert all 100 comments instantly
 	insertQuery := `
-		INSERT INTO comments (user_id, video_id, text, parent_id, created_at)
-		SELECT * FROM UNNEST($1::uuid[], $2::uuid[], $3::text[], $4::uuid[], $5::timestamptz[])
+		WITH inserted_comments AS (
+			INSERT INTO comments (user_id, video_id, text, parent_id, created_at)
+			SELECT * FROM UNNEST($1::uuid[], $2::uuid[], $3::text[], $4::uuid[], $5::timestamptz[])
+			RETURNING id, user_id, video_id, text, parent_id, reply_counts, created_at
+		)
+		SELECT ic.id, ic.parent_id, ic.text, ic.reply_counts, ic.created_at, u.id AS user_id, u.username, ic.video_id
+		FROM inserted_comments ic
+		JOIN users u ON ic.user_id = u.id;
 	`
-	_, err = tx.Exec(ctx, insertQuery, userIDs, videoIDs, texts, parentIDs, createdAts)
+	rows, err := tx.Query(ctx, insertQuery, userIDs, videoIDs, texts, parentIDs, createdAts)
 	if err != nil {
 		log.Printf("[%s] Bulk insert failed: %v", workerName, err)
-		return // Function exits, defer rolls back, messages stay in queue
+		return
 	}
+
+	// 3. Sort the returned rows into Top-Level comments vs Replies
+	var newTopComments []schemas.CommentResponse
+	var newTopVideoIDs []string
+
+	for rows.Next() {
+		var c schemas.CommentResponse
+		var pID *string
+		var vID string
+
+		if err := rows.Scan(&c.ID, &pID, &c.Text, &c.ReplyCounts, &c.CreatedAt, &c.Author.UserID, &c.Author.Username, &vID); err == nil {
+			c.ParentID = pID
+			if pID == nil {
+				newTopComments = append(newTopComments, c)
+				newTopVideoIDs = append(newTopVideoIDs, vID)
+			}
+		}
+	}
+	rows.Close()
 
 	// 4. Batch Increment reply_counts (if there are replies in this batch)
 	if len(replyCountsMap) > 0 {
@@ -209,28 +239,46 @@ func (s *CommentsWriter) processBatch(ctx context.Context, stream, group, worker
 	}
 
 	// 6. Update the Cache Counter only if field exists
-	if len(updateVideoIDs) > 0 {
-		pipe := s.redis.Client.Pipeline()
+	pipe := s.redis.Client.Pipeline()
 
-		// LUA SCRIPT: Protects against the "HINCRBY Initialization Bug"
-		// Only increments if the cache is already warm.
-		luaScript := `
-			if redis.call("HEXISTS", KEYS[1], ARGV[1]) == 1 then
-				return redis.call("HINCRBY", KEYS[1], ARGV[1], ARGV[2])
-			end
-			return 0
-		`
+	// LUA SCRIPT: Protects against the "HINCRBY Initialization Bug"
+	// Only increments if the cache is already warm.
+	luaScript := `
+		if redis.call("HEXISTS", KEYS[1], ARGV[1]) == 1 then
+			return redis.call("HINCRBY", KEYS[1], ARGV[1], ARGV[2])
+		end
+		return 0
+	`
+	if len(updateVideoIDs) > 0 {
 
 		for i, vid := range updateVideoIDs {
 			counterKey := fmt.Sprintf("vid:%s:stats", vid)
 			// Pass the script, the key (KEYS[1]), the field (ARGV[1]), and the delta (ARGV[2])
 			pipe.Eval(ctx, luaScript, []string{counterKey}, "comments", newVideoComments[i])
 		}
+	}
 
-		_, err := pipe.Exec(ctx)
-		if err != nil && err != redis.Nil {
-			log.Printf("[%s] Non-fatal error updating redis cache: %v", workerName, err)
-		}
+	// Buffer A: Push new top comments
+	for i, c := range newTopComments {
+		vid := newTopVideoIDs[i]
+		topListKey := fmt.Sprintf("video:%s:new_top_comments", vid)
+		b, _ := json.Marshal(c)
+		pipe.LPush(ctx, topListKey, string(b))
+		pipe.LTrim(ctx, topListKey, 0, 19)
+		pipe.Expire(ctx, topListKey, 5*time.Minute)
+	}
+
+	// Buffer B: Update Live Reply Counts
+	for pID, count := range replyCountsMap {
+		vid := parentVideoMap[pID]
+		liveReplyKey := fmt.Sprintf("video:%s:live_reply_counts", vid)
+		pipe.HIncrBy(ctx, liveReplyKey, pID, int64(count))
+		pipe.Expire(ctx, liveReplyKey, 5*time.Minute)
+	}
+
+	_, err = pipe.Exec(ctx)
+	if err != nil && err != redis.Nil {
+		log.Printf("[%s] Non-fatal error updating redis cache: %v", workerName, err)
 	}
 
 	// 7. Acknowledge the messages to remove them from the Redis pending queue

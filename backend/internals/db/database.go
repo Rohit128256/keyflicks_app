@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -29,16 +30,21 @@ func NewDbStore(pool *pgxpool.Pool) *DbStore {
 // function to create new user in database
 func (s *DbStore) CreateNewUser(ctx context.Context, DBInput *schemas.UserCreateDB) (*schemas.UserInDB, error) {
 	// our sql quesry to insert users
-	sql := `INSERT INTO users (email, hashed_password, username, dob)
-			VALUES($1,$2,$3,$4)
-			RETURNING id, email, username, dob, created_at, updated_at`
+	sql := `INSERT INTO users (email, hashed_password, username, first_name, last_name, bio, dob)
+			VALUES($1,$2,$3,$4,$5,$6,$7)
+			RETURNING id, email, username, first_name, last_name, bio, uploaded_videos, dob, created_at, updated_at`
 
 	var newUser schemas.UserInDB
 	err := s.db.QueryRow(ctx, sql, DBInput.Email, DBInput.HashedPassword,
-		DBInput.Username, DBInput.DOB).Scan(
+		DBInput.Username, DBInput.FirstName, DBInput.LastName, DBInput.Bio,
+		DBInput.DOB).Scan(
 		&newUser.ID,
 		&newUser.Email,
 		&newUser.Username,
+		&newUser.FirstName,
+		&newUser.LastName,
+		&newUser.Bio,
+		&newUser.UploadedVideos,
 		&newUser.DOB,
 		&newUser.CreatedAt,
 		&newUser.UpdatedAt,
@@ -71,7 +77,7 @@ func (s *DbStore) CreateNewUser(ctx context.Context, DBInput *schemas.UserCreate
 // function to get user by username
 func (s *DbStore) GetUserByName(ctx context.Context, username string) (*schemas.UserInDB, error) {
 
-	sql := `SELECT id, email, hashed_password, username, dob, created_at, updated_at
+	sql := `SELECT id, email, hashed_password, username, first_name, last_name, bio, uploaded_videos, dob, created_at, updated_at
 			FROM users
 			WHERE username = $1`
 
@@ -82,6 +88,10 @@ func (s *DbStore) GetUserByName(ctx context.Context, username string) (*schemas.
 		&user.Email,
 		&user.HashedPassword,
 		&user.Username,
+		&user.FirstName,
+		&user.LastName,
+		&user.Bio,
+		&user.UploadedVideos,
 		&user.DOB,
 		&user.CreatedAt,
 		&user.UpdatedAt,
@@ -98,7 +108,7 @@ func (s *DbStore) GetUserByName(ctx context.Context, username string) (*schemas.
 // function to get user by username
 func (s *DbStore) GetUserByEmail(ctx context.Context, email string) (*schemas.UserInDB, error) {
 
-	sql := `SELECT id, email, hashed_password, username, dob, created_at, updated_at
+	sql := `SELECT id, email, hashed_password, username, first_name, last_name, bio, uploaded_videos, dob, created_at, updated_at
 			FROM users
 			WHERE email = $1`
 
@@ -109,6 +119,10 @@ func (s *DbStore) GetUserByEmail(ctx context.Context, email string) (*schemas.Us
 		&user.Email,
 		&user.HashedPassword,
 		&user.Username,
+		&user.FirstName,
+		&user.LastName,
+		&user.Bio,
+		&user.UploadedVideos,
 		&user.DOB,
 		&user.CreatedAt,
 		&user.UpdatedAt,
@@ -328,30 +342,44 @@ func (s *DbStore) GetUserUploadedVideos(ctx context.Context, userID string, curs
 	return videos, nil
 }
 
-func (s *DbStore) DeleteVideoByOwner(ctx context.Context, videoID string, userID string) error {
-	query := `DELETE FROM videos WHERE id = $1 AND user_id = $2`
-
-	tag, err := s.db.Exec(ctx, query, videoID, userID)
-	if err != nil {
-		return fmt.Errorf("failed to execute delete query: %w", err)
-	}
-
-	// If no rows were affected, the video either doesn't exist or belongs to someone else
-	if tag.RowsAffected() == 0 {
-		return errors.New("video not found or unauthorized to delete")
-	}
-
-	return nil
-}
-
-func (s *DbStore) UpdateUserDetails(ctx context.Context, userID string, email string, username string, dob time.Time) error {
+func (s *DbStore) DeleteVideoByOwner(ctx context.Context, videoID string, userID string) (string, error) {
 	query := `
-		UPDATE users 
-		SET email = $1, username = $2, dob = $3
-		WHERE id = $4
+		WITH deleted_video AS (
+			DELETE FROM videos 
+			WHERE id = $1 AND user_id = $2
+			RETURNING id, user_id
+		),
+		updated_user AS (
+			UPDATE users u
+			SET uploaded_videos = GREATEST(0, uploaded_videos - 1)
+			FROM deleted_video dv
+			WHERE u.id = dv.user_id
+			RETURNING u.username
+		)
+		SELECT username FROM updated_user;
 	`
 
-	_, err := s.db.Exec(ctx, query, email, username, dob, userID)
+	var username string
+	err := s.db.QueryRow(ctx, query, videoID, userID).Scan(&username)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", errors.New("video not found or unauthorized to delete")
+		}
+		return "", fmt.Errorf("failed to execute delete query: %w", err)
+	}
+
+	return username, nil
+}
+
+func (s *DbStore) UpdateUserDetails(ctx context.Context, userID string, email string, username string, dob time.Time, firstName, lastName, bio string) error {
+	query := `
+		UPDATE users 
+		SET email = $1, username = $2, dob = $3, first_name = $4, last_name = $5, bio = $6
+		WHERE id = $7
+	`
+
+	_, err := s.db.Exec(ctx, query, email, username, dob, firstName, lastName, bio, userID)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {

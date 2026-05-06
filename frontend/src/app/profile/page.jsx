@@ -5,7 +5,7 @@ import { useAuthStore } from '@/lib/store';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
-import { User, Camera, Save, ArrowLeft } from 'lucide-react';
+import { User, Camera, Save, ArrowLeft, FileVideo } from 'lucide-react';
 import Link from 'next/link';
 
 export default function ProfilePage() {
@@ -14,7 +14,7 @@ export default function ProfilePage() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef(null);
 
-  const [formData, setFormData] = useState({ username: '', email: '', dob: '' });
+  const [formData, setFormData] = useState({ username: '', email: '', dob: '', firstname: '', lastname: '', bio: '' });
 
   useEffect(() => {
     if (!isAuthenticated) router.push('/login');
@@ -36,14 +36,21 @@ export default function ProfilePage() {
       setFormData({
         username: profile.username || '',
         email: profile.email || '',
-        dob: profile.dob ? profile.dob.split('T')[0] : ''
+        dob: profile.dob ? profile.dob.split('T')[0] : '',
+        firstname: profile.firstname || '',
+        lastname: profile.lastname || '',
+        bio: profile.bio || ''
       });
     }
   }, [profile]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data) => api.put('/profile/details', data),
-    onSuccess: () => {
+    onSuccess: (res) => {
+      // If username changed, backend re-issues tokens — store the new access token
+      if (res.data.access_token) {
+        useAuthStore.getState().setAccessToken(res.data.access_token);
+      }
       toast.success("Profile securely updated!");
       queryClient.invalidateQueries({ queryKey: ['profile', 'me'] });
     },
@@ -69,6 +76,9 @@ export default function ProfilePage() {
     if (formData.username && formData.username !== profile.username) payload.username = formData.username;
     if (formData.email && formData.email !== profile.email) payload.email = formData.email;
     if (formData.dob) payload.dob = `${formData.dob}T00:00:00Z`;
+    if (formData.firstname !== (profile.firstname || '')) payload.firstname = formData.firstname;
+    if (formData.lastname !== (profile.lastname || '')) payload.lastname = formData.lastname;
+    if (formData.bio !== (profile.bio || '')) payload.bio = formData.bio;
 
     if (Object.keys(payload).length > 0) {
       updateProfileMutation.mutate(payload);
@@ -129,6 +139,13 @@ export default function ProfilePage() {
            
            <h1 className="text-2xl font-black text-white mt-4 drop-shadow-md tracking-tight">Your Identity</h1>
            <p className="text-sm text-white/40 font-light mt-1">Manage your secure platform details</p>
+
+           {/* Videos uploaded stat */}
+           <div className="flex items-center gap-2 mt-4 px-4 py-2 rounded-xl bg-white/5 border border-white/8">
+             <FileVideo size={14} className="text-accent/70" />
+             <span className="text-sm font-bold text-white/70">{profile?.videos_uploaded ?? 0}</span>
+             <span className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">Videos Uploaded</span>
+           </div>
         </div>
 
         {isLoading ? (
@@ -137,6 +154,29 @@ export default function ProfilePage() {
            </div>
         ) : (
            <form onSubmit={handleUpdateProfile} className="flex flex-col gap-5 w-full max-w-md mx-auto">
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className="text-xs font-semibold text-white/40 uppercase tracking-widest pl-2 mb-2 block">First Name</label>
+                  <input 
+                    type="text" 
+                    value={formData.firstname} 
+                    onChange={e => setFormData({...formData, firstname: e.target.value})} 
+                    placeholder="First name"
+                    className="w-full bg-black/40 px-5 py-3.5 rounded-2xl border border-white/10 text-white text-sm focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/30 transition-all shadow-inner placeholder:text-white/20"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="text-xs font-semibold text-white/40 uppercase tracking-widest pl-2 mb-2 block">Last Name</label>
+                  <input 
+                    type="text" 
+                    value={formData.lastname} 
+                    onChange={e => setFormData({...formData, lastname: e.target.value})} 
+                    placeholder="Last name"
+                    className="w-full bg-black/40 px-5 py-3.5 rounded-2xl border border-white/10 text-white text-sm focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/30 transition-all shadow-inner placeholder:text-white/20"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="text-xs font-semibold text-white/40 uppercase tracking-widest pl-2 mb-2 block">Username</label>
                 <input 
@@ -169,6 +209,17 @@ export default function ProfilePage() {
                   style={{ colorScheme: 'dark' }}
                 />
               </div>
+
+              <div>
+                <label className="text-xs font-semibold text-white/40 uppercase tracking-widest pl-2 mb-2 block">Bio</label>
+                <textarea 
+                  value={formData.bio} 
+                  onChange={e => setFormData({...formData, bio: e.target.value})} 
+                  placeholder="Tell the world about yourself..."
+                  rows={3}
+                  className="w-full bg-black/40 px-5 py-3.5 rounded-2xl border border-white/10 text-white text-sm focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/30 transition-all shadow-inner resize-none placeholder:text-white/20"
+                />
+              </div>
               
               <button 
                 type="submit" 
@@ -188,3 +239,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+

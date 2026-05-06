@@ -232,6 +232,10 @@ func (s *CommentsDeleter) processBatch(ctx context.Context, stream, group, worke
 			// IMPORTANT: Multiply by -1 to subtract from the cache!
 			delta := -minusComments[i]
 			pipe.Eval(ctx, luaScript, []string{counterKey}, "comments", delta)
+			// WIPE ALL CACHES to ensure cascading deletions reflect properly
+			pipe.Del(ctx, fmt.Sprintf("video:%s:comments:first_page", vid))
+			pipe.Del(ctx, fmt.Sprintf("video:%s:new_top_comments", vid))
+			pipe.Del(ctx, fmt.Sprintf("video:%s:live_reply_counts", vid))
 		}
 
 		_, err := pipe.Exec(ctx)

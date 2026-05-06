@@ -260,7 +260,7 @@ func (h *StreamHandler) Stream_status(c *gin.Context) {
 	c.Writer.Header().Set("Cache-Control", "no-cache, no-transform")
 	c.Writer.Header().Set("Connection", "keep-alive")
 	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-	c.Writer.Header().Set("X-Accel-Buffering", "no") // Disable Nginx proxy buffering
+	c.Writer.Header().Set("X-Accel-Buffering", "no")  // Disable Nginx proxy buffering
 	c.Writer.Header().Set("Content-Encoding", "none") // Disable gzip buffering
 
 	// Force flush headers to explicitly trigger the client's `onopen` immediately
@@ -680,7 +680,7 @@ func (h *StreamHandler) Delete_video(c *gin.Context) {
 	userID := currUser.ID.String()
 
 	// 2. Delete from Database securely (Ensures ownership)
-	err := h.db.DeleteVideoByOwner(c.Request.Context(), videoID, userID)
+	username, err := h.db.DeleteVideoByOwner(c.Request.Context(), videoID, userID)
 	if err != nil {
 		if err.Error() == "video not found or unauthorized to delete" {
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Video not found or you do not have permission to delete it"})
@@ -694,7 +694,7 @@ func (h *StreamHandler) Delete_video(c *gin.Context) {
 	// deleting HLS files from S3 Streaming Bucket using the prefix "videos/{video_id}/"
 	s3Prefix := fmt.Sprintf("videos/%s/", videoID)
 
-	go func(vID, uID, prefix string) {
+	go func(vID, uID, uName, prefix string) {
 		bgCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
@@ -718,6 +718,8 @@ func (h *StreamHandler) Delete_video(c *gin.Context) {
 				fmt.Sprintf("master:%s", vID),        // Invalidate master playlist
 				fmt.Sprintf("VideoInfoOf:%s", vID),   // Invalidate processing cache
 				fmt.Sprintf("upload_status:%s", vID), // Invalidate status cache
+				fmt.Sprintf("UserProfile:%s", uName), // NEW: Invalidate profile
+				fmt.Sprintf("JwtAuth:%s", uName),     // NEW: Invalidate Auth
 			}
 
 			// combine all the keys
@@ -731,7 +733,7 @@ func (h *StreamHandler) Delete_video(c *gin.Context) {
 				}
 			}
 		}
-	}(videoID, userID, s3Prefix)
+	}(videoID, userID, username, s3Prefix)
 
 	// 4. Return immediate success to the client
 	c.JSON(http.StatusOK, gin.H{

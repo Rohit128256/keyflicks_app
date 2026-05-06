@@ -125,38 +125,88 @@ export default function DashboardPage() {
   return (
     <div className="w-full flex flex-col gap-6 w-full max-w-6xl mx-auto py-4">
       {/* ── Top Profile Summary ── */}
-      <div 
-        className="w-full border rounded-3xl p-6 relative overflow-hidden flex flex-col md:flex-row items-center md:items-start gap-6 z-10"
+      <div
+        className="w-full rounded-3xl relative overflow-hidden z-10"
         style={{
-          background: 'rgba(255,255,255,0.02)',
-          backdropFilter: 'blur(24px)',
-          borderColor: 'rgba(255,255,255,0.08)',
-          boxShadow: '0 0 0 1px rgba(255,255,255,0.04) inset, 0 10px 40px rgba(0,0,0,0.3)'
+          background: 'linear-gradient(135deg, rgba(20,20,20,0.95) 0%, rgba(12,12,12,0.98) 100%)',
+          border: '1px solid rgba(255,255,255,0.07)',
+          boxShadow: '0 0 0 1px rgba(255,255,255,0.04) inset, 0 20px 60px rgba(0,0,0,0.5)'
         }}
       >
-        <div className="absolute -top-px left-1/2 -translate-x-1/2 w-1/3 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-full" />
-        
-        <div className="w-24 h-24 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0 shadow-inner">
-           {/* Placeholder for Profile Picture */}
-           <User size={36} className="text-white/40" />
-        </div>
-        
-        <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left">
-           <h2 className="text-2xl font-black text-white drop-shadow-md mb-1 pb-1">
-             <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">
-                {profile?.username || "Loading..."}
-             </span>
-           </h2>
-           <p className="text-white/40 text-sm font-mono mb-4">{profile?.email}</p>
-           
-           <div className="flex gap-4">
-              <Link 
-                href="/profile" 
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-white/70 bg-white/5 hover:bg-white/10 hover:text-white border border-white/10 transition-all"
+        {/* Ambient red glow top-left */}
+        <div className="absolute -top-10 -left-10 w-48 h-48 rounded-full bg-accent/10 blur-3xl pointer-events-none" />
+        {/* Subtle diagonal shine */}
+        <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(115deg, rgba(255,255,255,0.03) 0%, transparent 50%)' }} />
+        {/* Top edge highlight */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+
+        <div className="p-7 flex flex-col md:flex-row items-center md:items-start gap-7">
+          {/* Avatar */}
+          <div className="relative shrink-0">
+            <div className="absolute inset-0 rounded-full bg-accent/25 blur-xl scale-110" />
+            <div
+              className="relative w-24 h-24 rounded-full flex items-center justify-center"
+              style={{
+                background: 'linear-gradient(135deg, rgba(230,0,0,0.15) 0%, rgba(30,30,30,0.8) 100%)',
+                border: '2px solid rgba(230,0,0,0.35)',
+                boxShadow: '0 0 0 4px rgba(230,0,0,0.08), 0 8px 24px rgba(0,0,0,0.4)'
+              }}
+            >
+              <User size={34} className="text-white/50" />
+            </div>
+          </div>
+
+          {/* Info */}
+          <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left gap-1">
+            <h2 className="text-2xl font-black tracking-tight leading-none">
+              <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(90deg, #fff 0%, rgba(255,255,255,0.75) 100%)' }}>
+                {profile?.username || 'Loading...'}
+              </span>
+            </h2>
+
+            {(profile?.firstname || profile?.lastname) && (
+              <p className="text-white/55 text-sm font-medium">
+                {[profile.firstname, profile.lastname].filter(Boolean).join(' ')}
+              </p>
+            )}
+
+            <p className="text-white/30 text-xs font-mono">{profile?.email}</p>
+
+            {profile?.bio && (
+              <p className="text-white/40 text-[13px] italic leading-relaxed mt-1 max-w-lg line-clamp-2 border-l-2 border-accent/30 pl-3">
+                {profile.bio}
+              </p>
+            )}
+
+            {/* Stats + Actions row */}
+            <div className="flex flex-wrap items-center gap-3 mt-4">
+              {/* Videos pill */}
+              <div
+                className="flex items-center gap-2 px-4 py-2 rounded-full"
+                style={{
+                  background: 'rgba(230,0,0,0.08)',
+                  border: '1px solid rgba(230,0,0,0.2)',
+                  boxShadow: '0 0 12px rgba(230,0,0,0.1) inset'
+                }}
+              >
+                <FileVideo size={13} className="text-accent/80" />
+                <span className="text-sm font-bold text-white">{profile?.videos_uploaded ?? 0}</span>
+                <span className="text-[10px] text-white/40 uppercase tracking-widest font-semibold">Videos</span>
+              </div>
+
+              {/* Edit Profile button */}
+              <Link
+                href="/profile"
+                className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold text-white/60 hover:text-white transition-all"
+                style={{
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                }}
               >
                 Edit Profile
               </Link>
-           </div>
+            </div>
+          </div>
         </div>
       </div>
 

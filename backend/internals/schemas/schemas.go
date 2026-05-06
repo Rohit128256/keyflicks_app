@@ -12,6 +12,9 @@ type UserLoginIn struct {
 }
 
 type UserCreateDB struct {
+	FirstName      string // NEW
+	LastName       string // NEW
+	Bio            string // NEW
 	Email          string
 	HashedPassword string
 	Username       string
@@ -21,8 +24,12 @@ type UserCreateDB struct {
 type UserInDB struct {
 	ID             uuid.UUID `json:"id" db:"id"`
 	Email          string    `json:"email" db:"email"`
-	HashedPassword string    `json:"-" db:"hashed_password"` // Note the json:"-" tag
+	HashedPassword string    `json:"-" db:"hashed_password"` // json:"-" tag
 	Username       string    `json:"username" db:"username"`
+	FirstName      string    `json:"first_name" db:"first_name"`           // NEW
+	LastName       string    `json:"last_name" db:"last_name"`             // NEW
+	Bio            string    `json:"bio" db:"bio"`                         // NEW
+	UploadedVideos int64     `json:"uploaded_videos" db:"uploaded_videos"` // NEW
 	DOB            time.Time `json:"dob" db:"dob"`
 	CreatedAt      time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at" db:"updated_at"`

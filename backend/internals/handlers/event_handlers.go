@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"keyflicks_app/internals/cache"
 	database "keyflicks_app/internals/db"
@@ -251,8 +252,8 @@ func (h *EventHandler) PostComment(c *gin.Context) {
 func (h *EventHandler) GetComments(c *gin.Context) {
 	videoID := c.Query("video_id")
 	parentIDStr := c.Query("parent_id")
-	cursorTimeStr := c.Query("cursor_time") // Updated param
-	cursorIDStr := c.Query("cursor_id")     // New param
+	cursorTimeStr := c.Query("cursor_time")
+	cursorIDStr := c.Query("cursor_id")
 
 	user, exists := c.Get("currentUser")
 	if !exists || videoID == "" {
@@ -261,9 +262,8 @@ func (h *EventHandler) GetComments(c *gin.Context) {
 	}
 
 	currUser := user.(*schemas.UserInDB)
-	currUserID := currUser.ID.String() // We need this now!
+	currUserID := currUser.ID.String()
 
-	// 1. Parse Inputs safely
 	var parentID *string
 	if parentIDStr != "" {
 		parentID = &parentIDStr
@@ -271,28 +271,37 @@ func (h *EventHandler) GetComments(c *gin.Context) {
 
 	var cursorTime *time.Time
 	var cursorID *string
-
 	if cursorTimeStr != "" && cursorIDStr != "" {
-		parsedTime, err := time.Parse(time.RFC3339, cursorTimeStr)
-		if err == nil {
-			cursorTime = &parsedTime
-			cursorID = &cursorIDStr
-		}
+		parsedTime, _ := time.Parse(time.RFC3339, cursorTimeStr)
+		cursorTime, cursorID = &parsedTime, &cursorIDStr
 	}
 
 	limit := 20
-
-	// 2. Cache Logic
 	var comments []schemas.CommentResponse
 	var err error
 
 	isFirstPageTopLevel := parentID == nil && cursorTime == nil
 
+	var liveReplyCounts map[string]string
+	var newTopCommentsStr []string
+
+	// 1. Fetch Snapshot + Buffers in ONE Network Trip!
 	if isFirstPageTopLevel {
-		comments, err = h.redis.GetFirstPageComments(c.Request.Context(), videoID)
+		pipe := h.redis.Client.Pipeline()
+		snapCmd := pipe.Get(c.Request.Context(), fmt.Sprintf("video:%s:comments:first_page", videoID))
+		newTopCmd := pipe.LRange(c.Request.Context(), fmt.Sprintf("video:%s:new_top_comments", videoID), 0, -1)
+		liveRepCmd := pipe.HGetAll(c.Request.Context(), fmt.Sprintf("video:%s:live_reply_counts", videoID))
+
+		_, _ = pipe.Exec(c.Request.Context())
+
+		if snapCmd.Err() == nil {
+			json.Unmarshal([]byte(snapCmd.Val()), &comments)
+		}
+		newTopCommentsStr = newTopCmd.Val()
+		liveReplyCounts = liveRepCmd.Val()
 	}
 
-	// 3. Database Fallback
+	// 2. Database Fallback (Self-Healing)
 	if len(comments) == 0 {
 		comments, err = h.db.GetComments(c.Request.Context(), videoID, parentID, cursorTime, cursorID, limit)
 		if err != nil {
@@ -301,47 +310,85 @@ func (h *EventHandler) GetComments(c *gin.Context) {
 		}
 
 		if isFirstPageTopLevel && len(comments) > 0 {
-			go h.redis.SetFirstPageComments(videoID, comments)
+			go func(vID string, data []schemas.CommentResponse) {
+				bgCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+				defer cancel()
+				b, _ := json.Marshal(data)
+				// Create the Snapshot, and WIPE the buffers so the cycle restarts perfectly!
+				pipe := h.redis.Client.Pipeline()
+				pipe.Set(bgCtx, fmt.Sprintf("video:%s:comments:first_page", vID), string(b), 5*time.Minute)
+				pipe.Del(bgCtx, fmt.Sprintf("video:%s:new_top_comments", vID))
+				pipe.Del(bgCtx, fmt.Sprintf("video:%s:live_reply_counts", vID))
+				pipe.Exec(bgCtx)
+			}(videoID, comments)
+		}
+	} else if isFirstPageTopLevel {
+		// 3. CACHE HIT: Stitch the Deltas!
+		if len(newTopCommentsStr) > 0 {
+			var merged []schemas.CommentResponse
+			seen := make(map[string]bool)
+
+			// Prepend brand new comments first
+			for _, str := range newTopCommentsStr {
+				var cm schemas.CommentResponse
+				if err := json.Unmarshal([]byte(str), &cm); err == nil && !seen[cm.ID] {
+					merged = append(merged, cm)
+					seen[cm.ID] = true
+				}
+			}
+			// Append the old snapshot comments
+			for _, cm := range comments {
+				if !seen[cm.ID] {
+					merged = append(merged, cm)
+					seen[cm.ID] = true
+				}
+			}
+			comments = merged
+			if len(comments) > limit {
+				comments = comments[:limit]
+			}
+		}
+
+		// Apply the Live Reply Counters seamlessly
+		if len(liveReplyCounts) > 0 {
+			for i := range comments {
+				if deltaStr, exists := liveReplyCounts[comments[i].ID]; exists {
+					var delta int64
+					fmt.Sscanf(deltaStr, "%d", &delta)
+					comments[i].ReplyCounts += delta
+				}
+			}
 		}
 	}
 
-	// ---------------------------------------------------------
-	// NEW: 3.5 PULL CURRENT USER'S COMMENT TO TOP (First Page Only)
-	// ---------------------------------------------------------
+	// 4. Pull Current User's Comment to Top
 	if isFirstPageTopLevel {
 		userComments, err := h.db.GetUserTopLevelComments(c.Request.Context(), videoID, currUserID)
-
 		if err == nil && len(userComments) > 0 {
-			// 1. Create a fast-lookup map of the user's comment IDs
 			userCommentIDs := make(map[string]bool, len(userComments))
 			for _, uc := range userComments {
 				userCommentIDs[uc.ID] = true
 			}
 
-			// 2. Filter out those exact comments from the main cached/DB list
 			filteredComments := make([]schemas.CommentResponse, 0, len(comments))
 			for _, c := range comments {
 				if !userCommentIDs[c.ID] {
 					filteredComments = append(filteredComments, c)
 				}
 			}
-
-			// 3. Prepend ALL user comments to the top of the final list
 			comments = append(userComments, filteredComments...)
 		}
 	}
 
-	// 4. Calculate Next Cursor
+	// 5. Setup Next Cursors
 	var nextCursorTime *time.Time
 	var nextCursorID *string
-
 	if len(comments) >= limit {
 		lastComment := comments[len(comments)-1]
 		nextCursorTime = &lastComment.CreatedAt
 		nextCursorID = &lastComment.ID
 	}
 
-	// 5. Send Response
 	c.JSON(http.StatusOK, gin.H{
 		"comments":         comments,
 		"next_cursor_time": nextCursorTime,
@@ -384,10 +431,11 @@ func (h *EventHandler) DeleteComment(c *gin.Context) {
 	}
 
 	// 3. Invalidate the Cache Instantly
-	// (Assuming you have a method like DeleteFirstPageComments or you can use the raw client)
-	// This ensures the deleted comment vanishes immediately if the user reloads the page.
-	cacheKey := fmt.Sprintf("video:%s:comments:first_page", req.VideoID) // Adjust this key to match what SetFirstPageComments uses
-	h.redis.Client.Del(c.Request.Context(), cacheKey)
+	pipe := h.redis.Client.Pipeline()
+	pipe.Del(c.Request.Context(), fmt.Sprintf("video:%s:comments:first_page", req.VideoID))
+	pipe.Del(c.Request.Context(), fmt.Sprintf("video:%s:new_top_comments", req.VideoID))
+	pipe.Del(c.Request.Context(), fmt.Sprintf("video:%s:live_reply_counts", req.VideoID))
+	_, _ = pipe.Exec(c.Request.Context())
 
 	// 4. Return instant success
 	c.JSON(http.StatusAccepted, gin.H{

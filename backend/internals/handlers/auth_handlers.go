@@ -45,12 +45,15 @@ func (h *AuthHandler) UserRegister(c *gin.Context) {
 	var newUser schemas.UserCreateDB
 
 	username := c.PostForm("username")
+	firstname := c.PostForm("firstname")
+	lastname := c.PostForm("lastname")
+	bio := c.PostForm("bio")
 	email := c.PostForm("email")
 	password := c.PostForm("password")
 	dobString := c.PostForm("dob")
 
 	// checking if something's missing
-	if username == "" || email == "" || password == "" || dobString == "" {
+	if username == "" || email == "" || password == "" || dobString == "" || firstname == "" || lastname == "" {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Required field missing!!"})
 		return
 	}
@@ -79,6 +82,9 @@ func (h *AuthHandler) UserRegister(c *gin.Context) {
 
 	// assign the values to the newUser struct
 	newUser.Username = username
+	newUser.FirstName = firstname
+	newUser.LastName = lastname
+	newUser.Bio = bio
 	newUser.Email = email
 	newUser.HashedPassword = hashPass
 	newUser.DOB = dob
@@ -280,10 +286,14 @@ func (h *AuthHandler) GetOwnDetails(c *gin.Context) {
 
 	// Return only the requested fields
 	c.JSON(http.StatusOK, gin.H{
-		"userid":   currUser.ID,
-		"username": currUser.Username,
-		"email":    currUser.Email,
-		"dob":      currUser.DOB,
+		"userid":          currUser.ID,
+		"username":        currUser.Username,
+		"firstname":       currUser.FirstName,
+		"lastname":        currUser.LastName,
+		"bio":             currUser.Bio,
+		"email":           currUser.Email,
+		"videos_uploaded": currUser.UploadedVideos,
+		"dob":             currUser.DOB,
 	})
 }
 
@@ -320,10 +330,14 @@ func (h *AuthHandler) GetUserDetails(c *gin.Context) {
 
 	// Build the response object with specific fields
 	response := gin.H{
-		"userid":   userFromDB.ID,
-		"username": userFromDB.Username,
-		"email":    userFromDB.Email,
-		"dob":      userFromDB.DOB,
+		"userid":          userFromDB.ID,
+		"username":        userFromDB.Username,
+		"firstname":       userFromDB.FirstName,
+		"lastname":        userFromDB.LastName,
+		"bio":             userFromDB.Bio,
+		"videos_uploaded": userFromDB.UploadedVideos,
+		"email":           userFromDB.Email,
+		"dob":             userFromDB.DOB,
 	}
 
 	// 3. Set Cache in the background (Non-blocking)
@@ -416,9 +430,12 @@ func (h *AuthHandler) UpdateProfileDetails(c *gin.Context) {
 
 	// 2. Define expected JSON payload (All fields are now optional)
 	var reqBody struct {
-		Email    string `json:"email"`
-		Username string `json:"username"`
-		DOB      string `json:"dob"`
+		Email     string `json:"email"`
+		Username  string `json:"username"`
+		DOB       string `json:"dob"`
+		FirstName string `json:"firstname"`
+		LastName  string `json:"lastname"`
+		Bio       string `json:"bio"`
 	}
 
 	if err := c.ShouldBindJSON(&reqBody); err != nil {
@@ -426,7 +443,7 @@ func (h *AuthHandler) UpdateProfileDetails(c *gin.Context) {
 		return
 	}
 
-	if reqBody.Email == "" && reqBody.Username == "" && reqBody.DOB == "" {
+	if reqBody.Email == "" && reqBody.Username == "" && reqBody.DOB == "" && reqBody.FirstName == "" && reqBody.LastName == "" && reqBody.Bio == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "No fields provided for update"})
 		return
 	}
@@ -456,8 +473,23 @@ func (h *AuthHandler) UpdateProfileDetails(c *gin.Context) {
 		dobToUpdate = parsedDob
 	}
 
+	firstnameToUpdate := currUser.FirstName
+	if reqBody.FirstName != "" {
+		firstnameToUpdate = reqBody.FirstName
+	}
+
+	lastnameToUpdate := currUser.LastName
+	if reqBody.LastName != "" {
+		lastnameToUpdate = reqBody.LastName
+	}
+
+	bioToUpdate := currUser.Bio
+	if reqBody.Bio != "" {
+		bioToUpdate = reqBody.Bio
+	}
+
 	// 4. Update Database
-	err := h.store.UpdateUserDetails(c.Request.Context(), userID, emailToUpdate, usernameToUpdate, dobToUpdate)
+	err := h.store.UpdateUserDetails(c.Request.Context(), userID, emailToUpdate, usernameToUpdate, dobToUpdate, firstnameToUpdate, lastnameToUpdate, bioToUpdate)
 	if err != nil {
 		// Handle cases where the requested email or username is already taken by someone else
 		if errors.Is(err, database.ErrEmailExists) || errors.Is(err, database.ErrUsernameExists) {
@@ -470,12 +502,61 @@ func (h *AuthHandler) UpdateProfileDetails(c *gin.Context) {
 		return
 	}
 
-	// 5. Return success
-	c.JSON(http.StatusOK, gin.H{
+	// 5. Invalidate stale caches so the next request gets fresh data
+	go func() {
+		bgCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		if h.redis != nil {
+			// Invalidate both old and new username keys (handles username change)
+			_ = h.redis.Remove(bgCtx,
+				fmt.Sprintf("JwtAuth:%s", currUser.Username),     // old username auth cache
+				fmt.Sprintf("JwtAuth:%s", usernameToUpdate),      // new username auth cache
+				fmt.Sprintf("UserProfile:%s", currUser.Username), // old username profile cache
+				fmt.Sprintf("UserProfile:%s", usernameToUpdate),  // new username profile cache
+			)
+		}
+	}()
+
+	// 6. If username changed, re-issue tokens since JWT encodes the username as `sub`
+	usernameChanged := usernameToUpdate != currUser.Username
+	response := gin.H{
 		"message":  "Profile updated successfully",
 		"username": usernameToUpdate,
 		"email":    emailToUpdate,
-	})
+	}
+
+	if usernameChanged {
+		token, err := h.jwt.Encode(usernameToUpdate)
+		if err != nil {
+			log.Printf("Failed to generate new access token after username change for user %s: %v", userID, err)
+			// Profile is already updated, so still return success but without new tokens
+			c.JSON(http.StatusOK, response)
+			return
+		}
+
+		refreshToken, err := h.jwt.GenerateRefreshToken(usernameToUpdate)
+		if err != nil {
+			log.Printf("Failed to generate new refresh token after username change for user %s: %v", userID, err)
+			c.JSON(http.StatusOK, response)
+			return
+		}
+
+		c.SetCookie(
+			"refresh_token",
+			refreshToken,
+			3600*24*60,
+			"/api/refresh-token",
+			"",
+			true,
+			true,
+		)
+
+		response["access_token"] = token
+		response["token_type"] = "Bearer"
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 func (h *AuthHandler) UserLogout(c *gin.Context) {

@@ -9,6 +9,9 @@ import toast from 'react-hot-toast';
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
     username: '',
+    firstname: '',
+    lastname: '',
+    bio: '',
     email: '',
     password: '',
     dob: ''
@@ -26,6 +29,9 @@ export default function RegisterPage() {
     try {
       const data = new FormData();
       data.append('username', formData.username);
+      data.append('firstname', formData.firstname);
+      data.append('lastname', formData.lastname);
+      data.append('bio', formData.bio);
       data.append('email', formData.email);
       data.append('password', formData.password);
       // Format DOB as RFC3339 generic (append T00:00:00Z)
@@ -83,6 +89,26 @@ export default function RegisterPage() {
              className="w-full bg-black/40 px-5 py-4 rounded-2xl border border-white/10 text-white text-sm focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/30 transition-all placeholder:text-white/20 font-mono shadow-inner"
              required
            />
+
+           <div className="flex gap-3">
+             <input 
+               type="text" 
+               name="firstname"
+               placeholder="First Name" 
+               value={formData.firstname}
+               onChange={handleChange}
+               className="flex-1 min-w-0 bg-black/40 px-5 py-4 rounded-2xl border border-white/10 text-white text-sm focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/30 transition-all placeholder:text-white/20 shadow-inner"
+             />
+             <input 
+               type="text" 
+               name="lastname"
+               placeholder="Last Name" 
+               value={formData.lastname}
+               onChange={handleChange}
+               className="flex-1 min-w-0 bg-black/40 px-5 py-4 rounded-2xl border border-white/10 text-white text-sm focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/30 transition-all placeholder:text-white/20 shadow-inner"
+             />
+           </div>
+
            <input 
              type="email" 
              name="email"
@@ -109,6 +135,15 @@ export default function RegisterPage() {
              className="w-full bg-black/40 px-5 py-4 rounded-2xl border border-white/10 text-white text-sm focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/30 transition-all text-white/50 font-mono shadow-inner uppercase"
              required
              style={{ colorScheme: 'dark' }}
+           />
+
+           <textarea 
+             name="bio"
+             placeholder="Tell us about yourself... (optional)" 
+             value={formData.bio}
+             onChange={handleChange}
+             rows={3}
+             className="w-full bg-black/40 px-5 py-4 rounded-2xl border border-white/10 text-white text-sm focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/30 transition-all placeholder:text-white/20 shadow-inner resize-none"
            />
            
            <div className="flex flex-col gap-2 mt-2">

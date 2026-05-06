@@ -202,13 +202,30 @@ func (w *DBWriter) processBatch(ctx context.Context, batch []redis.XMessage, wor
 	// --- 3. BULK DATABASE INSERTION (POSTGRESQL UNNEST) ---
 	var successfullyInsertedUploadIDs []string
 	var uniqueUserIDsForCache = make(map[string]bool)
+	var uniqueUsernamesForCache = make(map[string]bool)
 
 	if len(idsToInsert) > 0 {
 		query := `
-			INSERT INTO videos (id, user_id, title, description)
-			SELECT * FROM UNNEST($1::uuid[], $2::uuid[], $3::text[], $4::text[])
-			ON CONFLICT (id) DO NOTHING
-			RETURNING id, user_id;
+			WITH new_videos AS (
+				INSERT INTO videos (id, user_id, title, description)
+				SELECT * FROM UNNEST($1::uuid[], $2::uuid[], $3::text[], $4::text[])
+				ON CONFLICT (id) DO NOTHING
+				RETURNING id, user_id
+			),
+			updated_users AS (
+				UPDATE users u
+				SET uploaded_videos = uploaded_videos + count_data.v_count
+				FROM (
+					SELECT user_id, COUNT(*) as v_count 
+					FROM new_videos 
+					GROUP BY user_id
+				) count_data
+				WHERE u.id = count_data.user_id
+				RETURNING u.id, u.username
+			)
+			SELECT nv.id, nv.user_id, uu.username 
+			FROM new_videos nv
+			JOIN updated_users uu ON nv.user_id = uu.id;
 		`
 
 		rows, err := w.db.Query(ctx, query, idsToInsert, userIDs, titles, descriptions)
@@ -221,12 +238,13 @@ func (w *DBWriter) processBatch(ctx context.Context, batch []redis.XMessage, wor
 		defer rows.Close()
 
 		for rows.Next() {
-			var insertedID, insertedUserID string
-			if err := rows.Scan(&insertedID, &insertedUserID); err == nil {
+			var insertedID, insertedUserID, insertedUsername string
+			// Scan the newly returned username!
+			if err := rows.Scan(&insertedID, &insertedUserID, &insertedUsername); err == nil {
 				successfullyInsertedUploadIDs = append(successfullyInsertedUploadIDs, insertedID)
 				uniqueUserIDsForCache[insertedUserID] = true
+				uniqueUsernamesForCache[insertedUsername] = true // Save for cache purge
 
-				// Mark this specific Redis message as ready to ACK
 				if msgID, exists := readyMap[insertedID]; exists {
 					successfulMsgIDs = append(successfulMsgIDs, msgID)
 				}
@@ -277,6 +295,12 @@ func (w *DBWriter) processBatch(ctx context.Context, batch []redis.XMessage, wor
 		// (Optional) If you want to delete ALL pages for this user efficiently in the future,
 		// you can run an EVAL Lua script here:
 		// pipe.Eval(ctx, "for _,k in ipairs(redis.call('keys', ARGV[1])) do redis.call('del', k) end", []string{}, fmt.Sprintf("user_videos:%s:*", uID))
+	}
+
+	for uName := range uniqueUsernamesForCache {
+		// CRITICAL: Clear the profile and auth caches so the UI reflects the new video count
+		pipe.Del(ctx, fmt.Sprintf("UserProfile:%s", uName))
+		pipe.Del(ctx, fmt.Sprintf("JwtAuth:%s", uName))
 	}
 
 	// C. Process "Failed" Videos
