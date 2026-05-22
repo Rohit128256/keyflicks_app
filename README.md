@@ -52,45 +52,77 @@
 
 ### Authentication
 
-| Login Page | Register — Step 1 |
-|:---:|:---:|
-| ![Login Page](Assets/KeyflicksLoginPage.png) | ![Register Step 1](Assets/KeyflicskRegisterPage1.png) |
+**Login Page**
 
-| Register — Step 2 |
-|:---:|
-| ![Register Step 2](Assets/KeyflicksRegisterPage2.png) |
+![Login Page](Assets/KeyflicksLoginPage.png)
+
+**Register — Step 1**
+
+![Register Step 1](Assets/KeyflicskRegisterPage1.png)
+
+**Register — Step 2**
+
+![Register Step 2](Assets/KeyflicksRegisterPage2.png)
 
 ---
 
 ### Video Upload & Processing
 
-| Upload Section | Transcoding Status (Live SSE) | Successfully Uploaded |
-|:---:|:---:|:---:|
-| ![Upload Section](Assets/VideoUploadSection.png) | ![Transcoding Status](Assets/VideoUploadTranscodingStatus.png) | ![Upload Success](Assets/VideoSucessfullyUploadedandProcessed.png) |
+**Upload Section**
+
+![Upload Section](Assets/VideoUploadSection.png)
+
+**Transcoding Status (Live SSE)**
+
+![Transcoding Status](Assets/VideoUploadTranscodingStatus.png)
+
+**Successfully Uploaded & Processed**
+
+![Upload Success](Assets/VideoSucessfullyUploadedandProcessed.png)
 
 ---
 
 ### Video Playback
 
-| Home / Watch Page | Resolution Selector | Playback Speed Settings |
-|:---:|:---:|:---:|
-| ![Home Watch Page](Assets/HomeWatchpage.png) | ![Resolution Selector](Assets/VideoResolutionSelector.png) | ![Playback Speed](Assets/Videoplaybackspeedsettings.png) |
+**Home / Watch Page**
+
+![Home Watch Page](Assets/HomeWatchpage.png)
+
+**Resolution Selector**
+
+![Resolution Selector](Assets/VideoResolutionSelector.png)
+
+**Playback Speed Settings**
+
+![Playback Speed](Assets/Videoplaybackspeedsettings.png)
 
 ---
 
 ### Interactions
 
-| Likes & Dislikes | Comments Box | Video Description |
-|:---:|:---:|:---:|
-| ![Likes and Dislikes](Assets/VideoLikesandDislikes.png) | ![Comments Box](Assets/VideoCommentsBox.png) | ![Description Box](Assets/VideoDescriptionBox.png) |
+**Likes & Dislikes**
+
+![Likes and Dislikes](Assets/VideoLikesandDislikes.png)
+
+**Comments Box**
+
+![Comments Box](Assets/VideoCommentsBox.png)
+
+**Video Description Box**
+
+![Description Box](Assets/VideoDescriptionBox.png)
 
 ---
 
 ### User Profile
 
-| My Profile | Profile Video Dashboard |
-|:---:|:---:|
-| ![My Profile](Assets/Myprofilepage.png) | ![Profile Video Dashboard](Assets/ProfileVideoDashboard.png) |
+**My Profile**
+
+![My Profile](Assets/Myprofilepage.png)
+
+**Profile Video Dashboard**
+
+![Profile Video Dashboard](Assets/ProfileVideoDashboard.png)
 
 ---
 
@@ -151,78 +183,78 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                        User-Facing Layer                                 │
-│                                                                          │
+│                        User-Facing Layer                                │
+│                                                                         │
 │         ┌─────────────────────────────────────────────┐                 │
-│         │         Next.js 15 Frontend (Browser)        │                 │
-│         │  HLS.js · React Query · Zustand · SSE Client │                 │
+│         │         Next.js 15 Frontend (Browser)        │                │
+│         │  HLS.js · React Query · Zustand · SSE Client │                │
 │         └────────────────────┬────────────────────────┘                 │
 └──────────────────────────────│──────────────────────────────────────────┘
                                │ HTTP / SSE
 ┌──────────────────────────────▼──────────────────────────────────────────┐
-│                        Edge / Proxy Layer                                │
-│                                                                          │
+│                        Edge / Proxy Layer                               │
+│                                                                         │
 │              ┌──────────────────────────────────┐                       │
-│              │  Nginx  (Port 80)                 │                       │
-│              │  · secure_link HLS auth           │                       │
-│              │  · proxy_cache (HLS segments)     │                       │
-│              │  · CORS headers                   │                       │
-│              │  · 10 GB upload pass-through      │                       │
+│              │  Nginx  (Port 80)                 │                      │
+│              │  · secure_link HLS auth           │                      │
+│              │  · proxy_cache (HLS segments)     │                      │
+│              │  · CORS headers                   │                      │
+│              │  · 10 GB upload pass-through      │                      │
 │              └───┬───────────────┬───────────────┘                      │
 └──────────────────│───────────────│────────────────────────────────────  ┘
          /api/ ▼                   │ /videos/ (proxy_pass MinIO)
 ┌────────────────────┐    ┌────────▼─────────────────────────────────────┐
-│  Go / Gin API      │    │            MinIO / S3 Object Storage           │
-│  Server (:8000)    │    │  · streaming/   (HLS segments + m3u8)         │
-│                    │    │  · pending/     (raw uploaded videos)          │
-│  Auth Handlers     │    │  · profiles/    (user profile pictures)        │
+│  Go / Gin API      │    │            MinIO / S3 Object Storage         │
+│  Server (:8000)    │    │  · streaming/   (HLS segments + m3u8)        │
+│                    │    │  · pending/     (raw uploaded videos)        │
+│  Auth Handlers     │    │  · profiles/    (user profile pictures)      │
 │  Stream Handlers   │    └──────────────────────────────────────────────┘
 │  Event Handlers    │
 └────────┬───────────┘
          │ Redis Streams (XAdd)
 ┌────────▼───────────────────────────────────────────────────────────────┐
-│                     Async Processing Layer (Redis Streams)               │
-│                                                                          │
+│                     Async Processing Layer (Redis Streams)             │
+│                                                                        │
 │  ┌─────────────────────────┐   ┌────────────────────────────────────┐  │
-│  │  stream:likes_ingest    │   │  stream:comments_ingest             │  │
-│  │  (FNV hash partitioned) │   │  (round-robin consumer group)       │  │
+│  │  stream:likes_ingest    │   │  stream:comments_ingest            │  │
+│  │  (FNV hash partitioned) │   │  (round-robin consumer group)      │  │
 │  └────────────┬────────────┘   └──────────────────┬─────────────────┘  │
-│               │                                   │                     │
+│               │                                   │                    │
 │  ┌────────────▼────────────┐   ┌──────────────────▼─────────────────┐  │
-│  │ StreamLikesWorker (Go)  │   │  CommentsWriter (Go)                │  │
-│  │ 3 workers + 2 routers   │   │  3 workers                          │  │
-│  │ In-memory spam collapse │   │  UNNEST bulk insert                 │  │
-│  │ UNNEST bulk upsert      │   │  Live reply count delta             │  │
+│  │ StreamLikesWorker (Go)  │   │  CommentsWriter (Go)               │  │
+│  │ 3 workers + 2 routers   │   │  3 workers                         │  │
+│  │ In-memory spam collapse │   │  UNNEST bulk insert                │  │
+│  │ UNNEST bulk upsert      │   │  Live reply count delta            │  │
 │  └────────────┬────────────┘   └──────────────────┬─────────────────┘  │
-│               │ PostgreSQL UNNEST                  │ PostgreSQL UNNEST  │
+│               │ PostgreSQL UNNEST                  │ PostgreSQL UNNEST │
 │  ┌────────────▼─────────────────────────────────────────────────────┐  │
-│  │                     video_processing_stream                       │  │
-│  │                  (MinIO → Go Webhook → Redis XAdd)                │  │
+│  │                     video_processing_stream                      │  │
+│  │                  (MinIO → Go Webhook → Redis XAdd)               │  │
 │  └────────────────────────────┬─────────────────────────────────────┘  │
-│                               │                                         │
+│                               │                                        │
 │  ┌────────────────────────────▼─────────────────────────────────────┐  │
-│  │           Python Worker (Redis XReadGroup Consumer)               │  │
-│  │  · FFmpeg GPU-accelerated HLS transcoding (4 resolutions)         │  │
-│  │  · Concurrent Queue Uploader (10 threads + rolling deletion)      │  │
+│  │           Python Worker (Redis XReadGroup Consumer)              │  │
+│  │  · FFmpeg GPU-accelerated HLS transcoding (4 resolutions)        │  │
+│  │  · Concurrent Queue Uploader (10 threads + rolling deletion)     │  │
 │  │  · Progress streaming to Redis → SSE → Browser                   │  │
 │  └──────────────────────────────────────────────────────────────────┘  │
 └────────────────────────────────────────────────────────────────────────┘
                                │
 ┌──────────────────────────────▼────────────────────────────────────────┐
-│                         Data Layer                                      │
-│                                                                         │
+│                         Data Layer                                    │
+│                                                                       │
 │   ┌──────────────┐   ┌──────────────────────────────┐                 │
-│   │  PostgreSQL  │   │  Redis                        │                 │
+│   │  PostgreSQL  │   │  Redis                       │                 │
 │   │  users       │   │  · vid:{id}:stats   (HSet)   │                 │
 │   │  videos      │   │  · vid:{id}:user:{id} (str)  │                 │
-│   │  comments    │   │  · video:{id}:comments:*      │                 │
+│   │  comments    │   │  · video:{id}:comments:*     │                 │
 │   │  video_likes │   │  · user_videos:{id}:{cursor} │                 │
-│   │  playlists   │   │  · playlist:{id}:{res}        │                 │
+│   │  playlists   │   │  · playlist:{id}:{res}       │                 │
 │   └──────────────┘   │  · master:{id}               │                 │
-│                       │  · JwtAuth:{username}         │                 │
-│                       │  · UserProfile:{username}     │                 │
-│                       └──────────────────────────────┘                 │
-└────────────────────────────────────────────────────────────────────────┘
+│                      │  · JwtAuth:{username}        │                 │
+│                      │  · UserProfile:{username}    │                 │
+│                      └──────────────────────────────┘                 │
+└───────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -235,16 +267,16 @@ This is the complete lifecycle of a video from the user's device to the streamin
 
 ```
 User (Browser)                   Go API (:8000)              Redis            MinIO/S3              Python Worker
-     │                                │                         │                  │                      │
-     │  POST /api/generate-upload-url │                         │                  │                      │
-     │──────────────────────────────▶│                         │                  │                      │
-     │                               │ SET VideoInfoOf:{id}    │                  │                      │
-     │                               │────────────────────────▶│                  │                      │
-     │                               │ SetCookie Transcode_status                 │                      │
-     │  ← presigned PUT URL ──────── │                         │                  │                      │
-     │                               │                         │                  │                      │
-     │  PUT presigned URL (raw video)│                         │                  │                      │
-     │───────────────────────────────────────────────────────────────────────────▶│                      │
+     │                                │                         │                  │                     │
+     │  POST /api/generate-upload-url │                         │                  │                     │
+     │──────────────────────────────▶│                          │                 │                     │
+     │                                │ SET VideoInfoOf:{id}    │                  │                     │
+     │                                │────────────────────────▶│                 │                     │
+     │                                │ SetCookie Transcode_status                 │                     │
+     │  ← presigned PUT URL ────────  │                         │                  │                     │
+     │                                │                         │                  │                     │
+     │  PUT presigned URL (raw video) │                         │                  │                     │
+     │───────────────────────────────────────────────────────────────────────────▶│                     │
      │  ← 200 OK ─────────────────────────────────────────────────────────────────│                      │
      │                               │                         │                  │                      │
      │                               │  MinIO notifies via S3 Event (webhook)     │                      │
@@ -283,47 +315,47 @@ User Action                    Go API                       Redis               
    │                             │                             │                               │
    │  POST /api/like             │                             │                               │
    │  ?video_id=X&action=like    │                             │                               │
-   │────────────────────────────▶│                             │                               │
-   │                             │  GET vid:{id}:user:{uid}   │                               │
+   │───────────────────────────▶│                             │                               │
+   │                             │  GET vid:{id}:user:{uid}    │                               │
    │                             │  (current state check)      │                               │
    │                             │───────────────────────────▶│                               │
    │                             │◀── "none" (or "like")      │                               │
    │                             │                             │                               │
-   │                             │  If currentState==targetState → 204 (debounce, no-op)      │
+   │                             │  If currentState==targetState → 204 (debounce, no-op)       │
    │                             │                             │                               │
    │                             │  Pipeline (1 network trip): │                               │
-   │                             │  SET vid:{id}:user:{uid} "like" 5h                         │
+   │                             │  SET vid:{id}:user:{uid} "like" 5h                          │
    │                             │  XAdd stream:likes_ingest   │                               │
    │                             │  {video_id, user_id, state} │                               │
    │                             │───────────────────────────▶│                               │
-   │◀─ 202 Accepted ─────────────│                             │                               │
+   │◀─ 202 Accepted ─────────────│                             │                              │
    │                             │                             │                               │
-   │                             │         ┌───────────────────▼───────────────────────────┐  │
-   │                             │         │  StreamLikesWorker (background goroutines)      │  │
-   │                             │         │                                                │  │
-   │                             │         │  Router reads stream:likes_ingest              │  │
-   │                             │         │  FNV hash(video_id) % 3 = workerIndex         │  │
-   │                             │         │  → Channels[workerIndex] ← event              │  │
-   │                             │         │                                                │  │
-   │                             │         │  WorkerLoop (every 4s or batch of 500):       │  │
-   │                             │         │  1. IN-MEMORY SPAM COLLAPSE                   │  │
-   │                             │         │     last state per (video, user) wins         │  │
-   │                             │         │                                                │  │
-   │                             │         │  2. PRE-READ DB STATE (UNNEST join)           │──▶│
-   │                             │         │                                                │  │
-   │                             │         │  3. TRI-STATE DELTA MATH (in Go, zero DB)     │  │
-   │                             │         │     none→like: likeDeltas[vid]++              │  │
-   │                             │         │     like→dislike: both deltas adjusted        │  │
-   │                             │         │                                                │  │
+   │                             │         ┌───────────────────▼───────────────────────────┐   │
+   │                             │         │  StreamLikesWorker (background goroutines)    │   │
+   │                             │         │                                               │   │
+   │                             │         │  Router reads stream:likes_ingest             │   │
+   │                             │         │  FNV hash(video_id) % 3 = workerIndex         │   │
+   │                             │         │  → Channels[workerIndex] ← event              │   │
+   │                             │         │                                               │   │
+   │                             │         │  WorkerLoop (every 4s or batch of 500):       │   │
+   │                             │         │  1. IN-MEMORY SPAM COLLAPSE                   │   │
+   │                             │         │     last state per (video, user) wins         │   │
+   │                             │         │                                               │   │
+   │                             │         │  2. PRE-READ DB STATE (UNNEST join)           │─▶│
+   │                             │         │                                               │   │
+   │                             │         │  3. TRI-STATE DELTA MATH (in Go, zero DB)     │   │
+   │                             │         │     none→like: likeDeltas[vid]++              │   │
+   │                             │         │     like→dislike: both deltas adjusted        │   │
+   │                             │         │                                               │   │
    │                             │         │  4. BULK UPSERT video_likes (UNNEST)          │──▶│
    │                             │         │  5. BULK DELETE (unliked rows, UNNEST)        │──▶│
    │                             │         │  6. BULK UPDATE like/dislike counters         │──▶│
-   │                             │         │     GREATEST(0, count + delta)                │  │
-   │                             │         │                                                │  │
-   │                             │         │  7. Lua Script: Update Redis cache            │  │
-   │                             │         │     HEXISTS → HINCRBY (only if warm)          │  │
-   │                             │         │  8. XAck batch of message IDs                 │  │
-   │                             │         └───────────────────────────────────────────────┘  │
+   │                             │         │     GREATEST(0, count + delta)                │   │
+   │                             │         │                                               │   │
+   │                             │         │  7. Lua Script: Update Redis cache            │   │
+   │                             │         │     HEXISTS → HINCRBY (only if warm)          │   │
+   │                             │         │  8. XAck batch of message IDs                 │   │
+   │                             │         └───────────────────────────────────────────────┘   │
 ```
 
 ---
@@ -353,11 +385,11 @@ User  →  Go API                    Go API
   │          │    (sorted by ID to prevent deadlocks)                 │
   │          │ 3. BULK INCREMENT comment_count on videos table        │
   │          │    (sorted by ID to prevent deadlocks)                 │
-  │          │ 4. Lua: HINCRBY vid:{id}:stats comments (if warm)     │
-  │          │ 5. LPUSH video:{id}:new_top_comments (buffer)         │
-  │          │    LTRIM to last 20 entries                           │
-  │          │ 6. HINCRBY video:{id}:live_reply_counts {pID} delta   │
-  │          │ 7. XAck all message IDs                               │
+  │          │ 4. Lua: HINCRBY vid:{id}:stats comments (if warm)      │
+  │          │ 5. LPUSH video:{id}:new_top_comments (buffer)          │
+  │          │    LTRIM to last 20 entries                            │
+  │          │ 6. HINCRBY video:{id}:live_reply_counts {pID} delta    │
+  │          │ 7. XAck all message IDs                                │
   │          └────────────────────────────────────────────────────────┘
   │
   │   GET /api/comments?video_id=X (first page)
@@ -382,24 +414,24 @@ User  →  Go API                    Go API
 
 ```
 Browser                        Go API (:8000)                    Nginx (:80)                   MinIO (:9000)
-   │                                │                                 │                              │
-   │  GET /api/master/{video_id}    │                                 │                              │
-   │───────────────────────────────▶│                                 │                              │
-   │                                │ Redis GET master:{id}           │                              │
-   │                                │ (cache miss)                    │                              │
+   │                                │                                 │                             │
+   │  GET /api/master/{video_id}    │                                 │                             │
+   │───────────────────────────────▶│                                 │                            │
+   │                                │ Redis GET master:{id}           │                             │
+   │                                │ (cache miss)                    │                             │
    │                                │ S3.GetObject videos/{id}/master.m3u8                          │
    │                                │──────────────────────────────────────────────────────────────▶│
    │                                │◀─────────────────────────────────────────────────── m3u8 body │
-   │                                │ RewriteMasterPlaylist()                                        │
-   │                                │ → replaces relative paths with /api/playlist/{id}/{res}        │
-   │                                │ Background: Redis SET master:{id} TTL=1800s                    │
+   │                                │ RewriteMasterPlaylist()                                       │
+   │                                │ → replaces relative paths with /api/playlist/{id}/{res}       │
+   │                                │ Background: Redis SET master:{id} TTL=1800s                   │
    │◀─ rewritten master.m3u8 ───── │                                 │                              │
-   │                                │                                 │                              │
-   │  (HLS.js parses, picks 720p)   │                                 │                              │
-   │  GET /api/playlist/{id}/720p   │                                 │                              │
-   │───────────────────────────────▶│                                 │                              │
+   │                                │                                 │                             │
+   │  (HLS.js parses, picks 720p)   │                                 │                             │
+   │  GET /api/playlist/{id}/720p   │                                 │                             │
+   │───────────────────────────────▶│                                 │                            │
    │                                │ Redis GET playlist:{id}:720p   │                              │
-   │                                │ (cache miss / stale refresh)    │                              │
+   │                                │ (cache miss / stale refresh)    │                             │
    │                                │ S3.GetObject videos/{id}/720p/playlist.m3u8                   │
    │                                │──────────────────────────────────────────────────────────────▶│
    │                                │◀────────────────────────────────────────────────── m3u8 body  │
@@ -409,16 +441,16 @@ Browser                        Go API (:8000)                    Nginx (:80)    
    │                                │ Background: cache signed playlist (TTL = 2100s)                │
    │◀─ rewritten playlist.m3u8 ────│                                 │                              │
    │                                │                                 │                              │
-   │  GET /videos/{id}/720p/seg_001.ts?sig=XXX&st=YYYY               │                              │
-   │──────────────────────────────────────────────────────────────────▶│                              │
-   │                                │                                 │ Validate secure_link MD5    │
-   │                                │                                 │ Check expiry (st field)     │
+   │  GET /videos/{id}/720p/seg_001.ts?sig=XXX&st=YYYY                │                              │
+   │──────────────────────────────────────────────────────────────────▶│                             │
+   │                                │                                 │ Validate secure_link MD5     │
+   │                                │                                 │ Check expiry (st field)      │
    │                                │                                 │ proxy_cache hls_cache;       │
    │                                │                                 │ proxy_pass MinIO             │
    │                                │                                 │─────────────────────────────▶│
    │◀─ video/MP2T segment ──────────────────────────────────────────────────────────────────────────│
    │  (HLS.js decodes, plays)       │                                 │                              │
-```
+``` 
 
 ---
 
