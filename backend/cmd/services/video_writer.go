@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
+	"net"
 	"os"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -23,8 +26,8 @@ type dataInRedis struct {
 }
 
 const (
-	MaxBatchSize = 50              // Maximum number of videos to process in one transaction
-	BlockTimeout = 2 * time.Second // Maximum time a worker waits to fill a batch
+	MaxBatchSize = 50 // Maximum number of videos to process in one transaction
+	BlockTimeout = 0  // Maximum time a worker waits to fill a batch
 )
 
 type DBWriter struct {
@@ -107,6 +110,25 @@ func (w *DBWriter) worker(ctx context.Context, workerID int, consumerName string
 					// Context was canceled while blocking in XReadGroup
 					return
 				}
+
+				// ROBUST CHECK: Unwraps the error to find the exact OS/Network failure
+				isEOF := errors.Is(err, io.EOF)
+				isConnReset := errors.Is(err, syscall.ECONNRESET)
+				isNetClosed := errors.Is(err, net.ErrClosed)
+
+				if isEOF || isConnReset || isNetClosed {
+					// Upstash killed the idle connection. Reconnect silently.
+					time.Sleep(100 * time.Millisecond)
+					continue
+				}
+
+				// (Optional Safety Net): Catch generic network timeouts
+				var netErr net.Error
+				if errors.As(err, &netErr) && netErr.Timeout() {
+					time.Sleep(100 * time.Millisecond)
+					continue
+				}
+
 				log.Printf("Worker %d: Redis read error: %v", workerID, err)
 				time.Sleep(1 * time.Second) // Backoff on actual connection errors
 				continue

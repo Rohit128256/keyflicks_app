@@ -2,9 +2,13 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"log"
+	"net"
 	"sort"
+	"syscall"
 	"time"
 
 	"keyflicks_app/internals/cache"
@@ -61,14 +65,35 @@ func (s *CommentsDeleter) worker(ctx context.Context, stream, group, workerName 
 				Consumer: workerName,
 				Streams:  []string{stream, ">"},
 				Count:    100,
-				Block:    2 * time.Second,
+				Block:    0,
 			}).Result()
 
 			if err != nil {
-				if err != redis.Nil {
-					log.Printf("[%s] Error reading stream: %v", workerName, err)
-					time.Sleep(1 * time.Second)
+				if err == redis.Nil {
+					continue
 				}
+
+				// ROBUST CHECK: Unwraps the error to find the exact OS/Network failure
+				isEOF := errors.Is(err, io.EOF)
+				isConnReset := errors.Is(err, syscall.ECONNRESET)
+				isNetClosed := errors.Is(err, net.ErrClosed)
+
+				if isEOF || isConnReset || isNetClosed {
+					// Upstash killed the idle connection. Reconnect silently.
+					time.Sleep(100 * time.Millisecond)
+					continue
+				}
+
+				// (Optional Safety Net): Catch generic network timeouts
+				var netErr net.Error
+				if errors.As(err, &netErr) && netErr.Timeout() {
+					time.Sleep(100 * time.Millisecond)
+					continue
+				}
+
+				// Only log ACTUAL unexpected errors
+				log.Printf("[%s] Error reading from stream: %v", workerName, err)
+				time.Sleep(1 * time.Second)
 				continue
 			}
 

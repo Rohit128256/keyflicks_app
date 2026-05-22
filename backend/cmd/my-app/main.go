@@ -130,16 +130,18 @@ func main() {
 	db_store := database.NewDbStore(dbPool)
 
 	// celery configuration
-	redis_pool := createRedisPool("redis://localhost:6379")
+	redis_pool := createRedisPool(redis_url)
 	celery_ins, err := celery.NewCelery(redis_pool)
 	if err != nil {
-		log.Printf("error occured while configuring celery : %v", err)
+		log.Printf("error occured while configuring celery! : %v", err)
 	}
 
 	// redis configuration
-	redis_client := redis.NewClient(&redis.Options{
-		Addr: redis_url,
-	})
+	opt, err := redis.ParseURL(redis_url)
+	if err != nil {
+		log.Printf("error occured while parsing redis url! : %v", err)
+	}
+	redis_client := redis.NewClient(opt)
 
 	defer redis_client.Close()
 

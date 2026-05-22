@@ -1,5 +1,5 @@
-#command to run celery workers
-python -m celery -A app.celery_app:celery worker --pool=solo --loglevel=info --queues=video_tasks --hostname=wr_1
+#command to run video transcoder application consuming redis stream 
+python main.py --workers n (n is number of workers)  
 
 #command to run redis container (using docker)
 docker run -d --name redis -p 6379:6379 redis

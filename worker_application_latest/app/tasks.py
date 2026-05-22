@@ -9,9 +9,12 @@ import json
 import queue
 from mimetypes import guess_type
 from app.s3_configuration import s3, STREAMING_BUCKET, PENDING_BUCKET
-from celery import shared_task
+from dotenv import load_dotenv
+load_dotenv()
 
-redis_client_sync = redis.Redis(host='localhost', port=6379, db=0)
+# --- Configuration ---
+REDIS_URL = os.getenv("REDIS_URL")
+redis_client_sync = redis.Redis.from_url(REDIS_URL, decode_responses=True)
 
 # Regex to parse FFmpeg's time output: e.g., time=00:01:23.45
 FFMPEG_TIME_REGEX = re.compile(r"time=(\d+):(\d+):(\d+\.\d+)")
@@ -38,8 +41,7 @@ def get_video_metadata(presigned_url):
         print(f"Warning: Metadata probe failed: {e}")
         return 0.0, False
 
-@shared_task(name='tasks.transcode_and_upload_video', queue='video_tasks', bind=True)
-def process_video_from_s3(self, upload_id: str, s3_key: str):
+def process_video_from_s3(upload_id: str, s3_key: str):
     stream_name = "Event.Transcode.Status"
     job_status_stream = f"job_status:{upload_id}"
 
@@ -266,8 +268,6 @@ def process_video_from_s3(self, upload_id: str, s3_key: str):
             for _ in range(10):
                 try: upload_queue.put_nowait(None)
                 except: pass
-
-            self.update_state(state='FAILURE', meta={'exc': str(e)})
             
             redis_client_sync.xadd(
                 job_status_stream, {"status": "failed", "progress": "0"},

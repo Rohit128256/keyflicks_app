@@ -181,7 +181,7 @@ func (h *StreamHandler) Generate_upload_url(c *gin.Context) {
 
 // webhook handler
 func (h *StreamHandler) Handle_s3_event(c *gin.Context) {
-	var jsonData map[string]interface{}
+	var jsonData map[string]any
 
 	if err := c.ShouldBindJSON(&jsonData); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid webhook payload"})
@@ -203,8 +203,8 @@ func (h *StreamHandler) Handle_s3_event(c *gin.Context) {
 	}
 
 	// 3. Navigate down to the object key
-	s3Data, _ := record["s3"].(map[string]interface{})
-	objectData, _ := s3Data["object"].(map[string]interface{})
+	s3Data, _ := record["s3"].(map[string]any)
+	objectData, _ := s3Data["object"].(map[string]any)
 	encodedS3Key, _ := objectData["key"].(string)
 
 	// URL-decode the key
@@ -228,9 +228,21 @@ func (h *StreamHandler) Handle_s3_event(c *gin.Context) {
 	filename := parts[1]
 	uploadID := strings.Split(filename, ".")[0]
 
-	err = h.celery.DispatchVideoTranscodeTask(c.Request.Context(), uploadID, s3Key)
+	values := map[string]any{
+		"video_id": uploadID,
+		"s3_key":   s3Key,
+	}
+
+	streamKey := "video_processing_stream"
+
+	// Push to the Redis Stream instantly using redis client dependency
+	err = h.redis.Client.XAdd(c, &redis.XAddArgs{
+		Stream: streamKey,
+		Values: values,
+	}).Err()
+
 	if err != nil {
-		log.Printf("CRITICAL: Failed to dispatch Celery task for upload %s: %v", uploadID, err)
+		log.Printf("CRITICAL: Failed to dispatch task for upload %s: %v", uploadID, err)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to start video processing job"})
 		return
 	}

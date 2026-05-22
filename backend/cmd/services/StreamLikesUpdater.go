@@ -2,10 +2,14 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"hash/fnv"
+	"io"
 	"log"
+	"net"
 	"strings"
+	"syscall"
 	"time"
 
 	"keyflicks_app/internals/cache"
@@ -92,15 +96,35 @@ func (w *StreamLikesWorker) consumeStream(ctx context.Context, numWorkers int, c
 				Consumer: consumerName, // Use the dynamically passed name
 				Streams:  []string{streamKey, ">"},
 				Count:    1000,
-				Block:    2 * time.Second,
+				Block:    0,
 			}).Result()
 
 			if err != nil {
 				if err == redis.Nil {
-					continue // Stream empty, loop again
+					continue
 				}
+
+				// ROBUST CHECK: Unwraps the error to find the exact OS/Network failure
+				isEOF := errors.Is(err, io.EOF)
+				isConnReset := errors.Is(err, syscall.ECONNRESET)
+				isNetClosed := errors.Is(err, net.ErrClosed)
+
+				if isEOF || isConnReset || isNetClosed {
+					// Upstash killed the idle connection. Reconnect silently.
+					time.Sleep(100 * time.Millisecond)
+					continue
+				}
+
+				// (Optional Safety Net): Catch generic network timeouts
+				var netErr net.Error
+				if errors.As(err, &netErr) && netErr.Timeout() {
+					time.Sleep(100 * time.Millisecond)
+					continue
+				}
+
+				// Only log ACTUAL unexpected errors
 				log.Printf("[%s] Error reading from stream: %v", consumerName, err)
-				time.Sleep(1 * time.Second) // Backoff on error
+				time.Sleep(1 * time.Second)
 				continue
 			}
 
@@ -142,7 +166,7 @@ func (w *StreamLikesWorker) workerLoop(ctx context.Context, workerID int, ch <-c
 	log.Printf("StreamLikesUpdater worker - %d has been started", workerID)
 
 	// Flush whatever we have every 2 seconds, even if we haven't hit maxBatchSize
-	ticker := time.NewTicker(2 * time.Second)
+	ticker := time.NewTicker(4 * time.Second)
 	defer ticker.Stop()
 
 	for {
