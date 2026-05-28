@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"keyflicks_app/cmd/services"
 	"keyflicks_app/internals/auth"
 	"keyflicks_app/internals/cache"
@@ -14,7 +13,6 @@ import (
 	"keyflicks_app/internals/routes"
 	"keyflicks_app/internals/s3_store"
 	"log"
-	"net/url"
 	"os"
 	"time"
 
@@ -101,10 +99,11 @@ func main() {
 	minio_root_pass := os.Getenv("MINIO_ROOT_PASSWORD")
 	redis_url := os.Getenv("REDIS_URL")
 	jwt_secret := os.Getenv("JWT_SECRET")
-	dbUser := os.Getenv("POSTGRES_USER")
-	dbPass := os.Getenv("POSTGRES_PASSWORD")
-	dbHost := os.Getenv("POSTGRES_HOST")
-	dbName := os.Getenv("POSTGRES_DB")
+	// dbUser := os.Getenv("POSTGRES_USER")
+	// dbPass := os.Getenv("POSTGRES_PASSWORD")
+	// dbHost := os.Getenv("POSTGRES_HOST")
+	// dbName := os.Getenv("POSTGRES_DB")
+	db_url := os.Getenv("REMOTE_DB")
 	s3_streaming_bucket := os.Getenv("STREAMING_BUCKET")
 	s3_pending_bucket := os.Getenv("PENDING_BUCKET")
 	s3_profile_bucket := os.Getenv("PROFILE_BUCKET")
@@ -113,8 +112,6 @@ func main() {
 	log.Printf("DEBUG: MINIO_ENDPOINT value is: '%s'\n", minio_endpoint) // just for basic debugging
 
 	// postgres database configuration
-	dbCredentials := url.UserPassword(dbUser, dbPass)
-	db_url := fmt.Sprintf("postgres://%s@%s/%s", dbCredentials.String(), dbHost, dbName)
 	dbPool, err := pgxpool.New(context.Background(), db_url)
 	if err != nil {
 		log.Fatalf("Unable to connect to database: %v", err)

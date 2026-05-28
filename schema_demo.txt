@@ -10,7 +10,7 @@ CREATE TABLE users (
     first_name VARCHAR(100) NOT NULL DEFAULT '',
     last_name VARCHAR(100) NOT NULL DEFAULT '',
     bio TEXT NOT NULL DEFAULT '',
-    uploaded_videos BIGINT NOT NULL DEFAULT 0;
+    uploaded_videos BIGINT NOT NULL DEFAULT 0,
     
     -- Optional: a display name for the user
     username VARCHAR(50) UNIQUE NOT NULL,
@@ -101,16 +101,12 @@ CREATE TABLE video_likes (
     type VARCHAR(20) NOT NULL DEFAULT 'like',
     
     -- Timestamp for when the like was created (can be used as "liked at")
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    
-    -- A unique constraint to ensure a user can only like a video once.
-    -- If you later want to allow different 'types', you could change this to UNIQUE(user_id, video_id, type)
-    UNIQUE (user_id, video_id)
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Indexes for fast lookups
+CREATE UNIQUE INDEX idx_video_likes_user_video_covering ON video_likes (user_id, video_id) INCLUDE (type);
 CREATE INDEX idx_video_likes_video_id ON video_likes(video_id);
-CREATE INDEX idx_video_likes_user_id ON video_likes(user_id);
 
 
 CREATE TABLE comments (
